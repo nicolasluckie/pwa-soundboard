@@ -1,0 +1,32 @@
+node_modules/
+.DS_Store
+*.log
+client/dist/
+server/node_modules/
+client/node_modules/
+
+# Test artifacts
+client/playwright-report/
+client/test-results/*
+!client/test-results/badge.svg
+client/coverage/
+client/blob-report/
+
+# Environment
+venv/
+.env
+.env.*
+!.env.example
+
+# Audio source archive (not served by the app)
+audio/
+
+# Served audio files (ignore most, keep demos)
+client/public/samples/*
+!client/public/samples/fuck.mp3
+!client/public/samples/bruh-sound-effect.mp3
+!client/public/samples/yeet.mp3
+
+# Sound icons (ignore most, keep .sample.webp files)
+client/public/icons/sounds/*
+!client/public/icons/sounds/*.sample.webp

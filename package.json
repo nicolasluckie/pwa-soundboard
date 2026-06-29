@@ -1,0 +1,51 @@
+{
+  "name": "pwa-soundboard",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "install:client": "npm install --prefix client",
+    "install:server": "npm install --prefix server",
+    "postinstall": "npm run install:client && npm run install:server",
+    "prepare": "husky",
+    "commit": "cz",
+    "dev": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "start": "npm start --prefix server",
+    "update": "npm update && npm update --prefix client && npm update --prefix server",
+    "lint": "npm run lint --prefix client",
+    "format": "npm run format --prefix client",
+    "test:unit": "npm run test:unit --prefix client",
+    "test:unit:coverage": "npm run test:unit:coverage --prefix client",
+    "test:e2e": "npm run test:e2e --prefix client",
+    "test": "npm run test:unit && npm run test:e2e",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:restart": "docker compose restart",
+    "docker:rebuild": "docker compose up -d --build"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "lint-staged": {
+    "client/**/*.{js,jsx}": [
+      "npm exec --prefix client -- prettier --write",
+      "npm exec --prefix client -- eslint --fix --config client/.eslintrc.cjs --resolve-plugins-relative-to client"
+    ],
+    "*.{json,md,yaml,yml,css}": [
+      "npm exec --prefix client -- prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.0",
+    "@commitlint/config-conventional": "^21.2.0",
+    "commitizen": "^4.3.2",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8"
+  }
+}
