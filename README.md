@@ -5,15 +5,11 @@
 
 <div align="center">
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](./LICENSE)
-[![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)](https://react.dev)
-[![Vite](https://img.shields.io/badge/Vite-5-646cff?logo=vite&logoColor=white)](https://vite.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![PWA](https://img.shields.io/badge/PWA-Installable-success?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
-[![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)](https://expressjs.com)
-[![Vitest](https://img.shields.io/badge/Vitest-Unit_Tests-6e9f18?logo=vitest&logoColor=white)](https://vitest.dev)
-[![Playwright](https://img.shields.io/badge/Playwright-E2E-2ead33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![Version](https://img.shields.io/github/v/release/nicolasluckie/pwa-soundboard)](https://github.com/nicolasluckie/pwa-soundboard/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/nicolasluckie/pwa-soundboard/ci.yml)](https://github.com/nicolasluckie/pwa-soundboard/actions/workflows/ci.yml)
+[![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)](https://react.dev)
 
 </div>
 
