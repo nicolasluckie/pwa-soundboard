@@ -20,6 +20,7 @@
 - **Global volume slider** — adjust overall volume without touching system audio
 - **Global stop button** — silence all sounds with one click
 - **Overlapping playback** — sounds can play simultaneously; repeated clicks layer the audio
+- **Sound upload** — upload audio or video files through the UI; ffmpeg normalizes to MP3 automatically
 - **Installable PWA** — works offline with audio caching, installable on mobile and desktop
 
 ---
@@ -133,9 +134,17 @@ Tests live in `client/src/test/` and run in a jsdom environment.
 npm run test:e2e
 ```
 
-Tests live in `client/src/e2e/`. Playwright auto-starts the dev server on port 5173 — no need to run it separately. Only Chromium is configured.
+Tests live in `client/src/e2e/`. Playwright auto-starts both the Express server (port 3000) and the Vite dev server (port 5173) — no need to run them separately. Only Chromium is configured.
 
-In CI, e2e tests run against the production build via `vite preview` using the `PW_SKIP_BUILD` env var.
+In CI, e2e tests run against the production build served by the Express server using the `PW_SKIP_BUILD` env var.
+
+### Coverage gate
+
+Unit tests enforce a **70% minimum coverage** threshold across statements, branches, functions, and lines. The build fails if any metric drops below 70%.
+
+```bash
+npm run test:unit:coverage
+```
 
 ### Run all tests
 
@@ -182,8 +191,8 @@ The project has two audio directories:
 
 To add a sound:
 
-1. Drop an `.mp3`, `.wav`, or `.ogg` file into `client/public/samples/`.
-2. Edit `client/src/data/samples.json` to add an entry with `id`, `name`, `file`, and `color`.
+1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg and updates `samples.json` automatically.
+2. **Manually** — drop an `.mp3`, `.wav`, or `.ogg` file into `client/public/samples/`, then edit `client/src/data/samples.json` to add an entry with `id`, `name`, `file`, and `color`.
 
 A demo sound is included so the app works immediately.
 
@@ -204,12 +213,13 @@ The server listens on port 3000 by default. Configure via environment variables 
 
 ### Environment Variables
 
-| Variable      | Default               | Description                                        |
-| ------------- | --------------------- | -------------------------------------------------- |
-| `HOST`        | `127.0.0.1`           | Server bind address (`0.0.0.0` for all interfaces) |
-| `PORT`        | `3000`                | Server listen port                                 |
-| `ORIGIN`      | `http://HOST:PORT`    | Public-facing origin for CSRF origin checks        |
-| `SAMPLES_DIR` | `client/dist/samples` | Absolute path to audio samples directory           |
+| Variable       | Default                    | Description                                        |
+| -------------- | -------------------------- | -------------------------------------------------- |
+| `HOST`         | `127.0.0.1`                | Server bind address (`0.0.0.0` for all interfaces) |
+| `PORT`         | `3000`                     | Server listen port                                 |
+| `ORIGIN`       | `http://HOST:PORT`         | Public-facing origin for CSRF origin checks        |
+| `SAMPLES_DIR`  | `client/dist/samples`      | Absolute path to audio samples directory           |
+| `SAMPLES_JSON` | `SAMPLES_DIR/samples.json` | Absolute path to samples metadata file             |
 
 ### CI/CD
 

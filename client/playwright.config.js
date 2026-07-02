@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: process.env.PW_SKIP_BUILD ? 'http://localhost:3000' : 'http://localhost:5173',
     trace: 'on-first-retry',
   },
   projects: [
@@ -17,11 +17,27 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: process.env.PW_SKIP_BUILD
-      ? 'npx vite preview --port 5173 --strictPort'
-      : 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: process.env.PW_SKIP_BUILD
+    ? {
+        command: 'node ../server/index.js',
+        url: 'http://localhost:3000',
+        reuseExistingServer: !process.env.CI,
+        env: {
+          HOST: '127.0.0.1',
+          PORT: '3000',
+          SAMPLES_DIR: '../client/dist/samples',
+          SAMPLES_JSON: '../client/dist/samples/samples.json',
+        },
+      }
+    : {
+        command: 'node ../server/index.js & npm run dev',
+        url: 'http://localhost:5173',
+        reuseExistingServer: !process.env.CI,
+        env: {
+          HOST: '127.0.0.1',
+          PORT: '3000',
+          SAMPLES_DIR: '../client/public/samples',
+          SAMPLES_JSON: '../client/src/data/samples.json',
+        },
+      },
 });

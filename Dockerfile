@@ -17,12 +17,17 @@ RUN npm run build
 # --- runtime stage ---
 FROM node:22-alpine AS runtime
 
+RUN apk add --no-cache ffmpeg
+
 WORKDIR /app
 
 COPY server/package*.json ./server/
 RUN cd server && npm ci --omit=dev && cd ..
 
 COPY --from=build /app/client/dist ./client/dist
+
+# Ensure samples directory is writable for uploads
+RUN mkdir -p /app/client/dist/samples && chmod 777 /app/client/dist/samples
 
 ENV NODE_ENV=production
 ENV PORT=3000
