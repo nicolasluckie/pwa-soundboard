@@ -23,6 +23,7 @@ WORKDIR /app
 
 COPY server/package*.json ./server/
 RUN cd server && npm ci --omit=dev && cd ..
+COPY server/index.js ./server/
 
 COPY --from=build /app/client/dist ./client/dist
 

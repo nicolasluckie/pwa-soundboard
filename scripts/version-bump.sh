@@ -92,9 +92,9 @@ fi
 
 # Commit package.json and CHANGELOG
 if [[ "$DRY_RUN" -eq 1 ]]; then
-  echo "[DRY RUN] Would commit package.json and CHANGELOG.md"
+  echo "[DRY RUN] Would commit package.json, package-lock.json, and CHANGELOG.md"
 else
-  git add package.json CHANGELOG.md
+  git add package.json package-lock.json CHANGELOG.md
   git commit -m "chore(release): prepare ${TAG}"
 fi
 
@@ -114,5 +114,4 @@ else
 fi
 echo ""
 echo "Next steps:"
-echo "  git push"
-echo "  git push origin ${TAG}"
+echo "  git push --follow-tags"

@@ -5,7 +5,13 @@
 
 <div align="center">
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](./LICENSE)
+[![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-5-646cff?logo=vite&logoColor=white)](https://vite.dev)
+[![PWA](https://img.shields.io/badge/PWA-Installable-success?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
+[![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)](https://expressjs.com)
+[![Vitest](https://img.shields.io/badge/Vitest-Unit_Tests-6e9f18?logo=vitest&logoColor=white)](https://vitest.dev)
+[![Playwright](https://img.shields.io/badge/Playwright-E2E-2ead33?logo=playwright&logoColor=white)](https://playwright.dev)
 [![Version](https://img.shields.io/github/v/release/nicolasluckie/pwa-soundboard)](https://github.com/nicolasluckie/pwa-soundboard/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/nicolasluckie/pwa-soundboard/ci.yml)](https://github.com/nicolasluckie/pwa-soundboard/actions/workflows/ci.yml)
 
@@ -67,7 +73,7 @@
 3. Install Playwright browsers (for e2e tests):
 
    ```bash
-   npx playwright install --with-deps chromium
+   npx playwright install chromium
    ```
 
 4. Start the development server:
@@ -96,6 +102,7 @@
 | `npm run docker:build`       | Build Docker image                          |
 | `npm run docker:up`          | Start container in background               |
 | `npm run docker:down`        | Stop and remove container                   |
+| `npm run docker:restart`     | Restart container                           |
 | `npm run docker:logs`        | Follow container logs                       |
 | `npm run docker:rebuild`     | Rebuild and restart container               |
 
