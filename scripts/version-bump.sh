@@ -84,7 +84,7 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
 else
   if command -v git-cliff >/dev/null 2>&1; then
     echo "Generating CHANGELOG..."
-    git-cliff -o "${ROOT}/CHANGELOG.md"
+    git-cliff --tag "${TAG}" -o "${ROOT}/CHANGELOG.md"
   else
     echo "Warning: git-cliff not found, skipping CHANGELOG generation"
   fi
