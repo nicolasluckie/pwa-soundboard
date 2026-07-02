@@ -646,5 +646,87 @@
     "color": "#34d399",
     "emoji": "🫖",
     "tags": ["tea", "british", "meme", "reaction"]
+  },
+  {
+    "id": "anakin-liar",
+    "name": "Anakin - LIAR",
+    "file": "anakin-liar.mp3",
+    "color": "#fbbf24",
+    "emoji": "😤",
+    "tags": [
+      "star wars",
+      "anakin",
+      "liar",
+      "meme",
+      "reaction",
+      "movie",
+      "prequel",
+      "hayden christensen",
+      "2000s"
+    ]
+  },
+  {
+    "id": "erika",
+    "name": "Erika (Marching Song)",
+    "file": "erika.mp3",
+    "color": "#ff6b6b",
+    "emoji": "🪖",
+    "tags": ["erika", "marching song", "military", "meme", "music", "ww2", "german", "1930s"]
+  },
+  {
+    "id": "fmj-holy-jesus",
+    "name": "Full Metal Jacket - Holy Jesus",
+    "file": "fmj-holy-jesus.mp3",
+    "color": "#ff6b6b",
+    "emoji": "😱",
+    "tags": [
+      "full metal jacket",
+      "holy jesus",
+      "what is that",
+      "meme",
+      "movie",
+      "reaction",
+      "vietnam",
+      "stanley kubrick",
+      "1987",
+      "shock"
+    ]
+  },
+  {
+    "id": "leeroy-jenkins",
+    "name": "Leeroy Jenkins",
+    "file": "leeroy-jenkins.mp3",
+    "color": "#fbbf24",
+    "emoji": "🐔",
+    "tags": [
+      "leeroy jenkins",
+      "world of warcraft",
+      "wow",
+      "game",
+      "meme",
+      "classic",
+      "2005",
+      "gaming",
+      "rush",
+      "battlecry"
+    ]
+  },
+  {
+    "id": "taco-bell-bong",
+    "name": "Taco Bell Bong",
+    "file": "taco-bell-bong.mp3",
+    "color": "#fbbf24",
+    "emoji": "🔔",
+    "tags": [
+      "taco bell",
+      "bong",
+      "bell",
+      "meme",
+      "sound effect",
+      "commercial",
+      "2000s",
+      "i like ya cut g",
+      "vine"
+    ]
   }
 ]
