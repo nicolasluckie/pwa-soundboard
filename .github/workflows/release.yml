@@ -177,6 +177,31 @@ jobs:
           digest=$(docker buildx imagetools inspect "$IMAGE:sha-${GITHUB_SHA::7}" --format '{{json .Manifest.Digest}}' | tr -d '"')
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
 
+      - name: Smoke test the image
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/pwa-soundboard
+          DIGEST: ${{ steps.manifest.outputs.digest }}
+        run: |
+          set -euo pipefail
+          docker pull "$IMAGE@$DIGEST"
+          docker tag "$IMAGE@$DIGEST" pwa-soundboard:smoke
+          docker run -d --name smoke -p 3000:3000 \
+            -e HOST=0.0.0.0 -e PORT=3000 \
+            pwa-soundboard:smoke
+          for i in $(seq 1 15); do
+            if curl -sf http://localhost:3000/ >/dev/null 2>&1; then
+              echo "Container is responding"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::Container did not respond within 15 seconds"
+          docker logs smoke
+          exit 1
+      - name: Cleanup smoke container
+        if: always()
+        run: docker rm -f smoke 2>/dev/null || true
+
       - name: Attest build provenance
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
