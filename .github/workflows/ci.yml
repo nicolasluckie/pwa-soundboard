@@ -26,6 +26,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: npm install -g npm@latest
       - run: npm ci --ignore-scripts
       - working-directory: client
         run: npm ci
@@ -42,6 +43,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: npm install -g npm@latest
       - run: npm ci --ignore-scripts
       - working-directory: client
         run: npm ci
@@ -79,6 +81,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: npm install -g npm@latest
       - run: npm ci --ignore-scripts
       - working-directory: client
         run: npm ci
@@ -108,6 +111,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: npm install -g npm@latest
       - run: npm ci --ignore-scripts
       - working-directory: client
         run: npm ci
@@ -152,6 +156,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: npm install -g npm@latest
       - run: npm ci --ignore-scripts
       - working-directory: client
         run: npm ci
