@@ -52,7 +52,9 @@ jobs:
       - working-directory: client
         run: npm run test:unit -- --reporter=junit --outputFile=test-results/junit.xml
       - name: Generate test badge
-        run: npx -y genbadge tests -i client/test-results/junit.xml -o client/test-results/badge.svg
+        run: |
+          pip install --break-system-packages genbadge[tests]
+          genbadge tests -i client/test-results/junit.xml -o client/test-results/badge.svg
       - name: Commit test badge
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |

@@ -111,6 +111,7 @@ jobs:
             --ignore-unfixed \
             --exit-code 1 \
             --pkg-types os,library \
+            --ignorefile .trivyignore \
             "$IMAGE"
 
       - name: Export digest
