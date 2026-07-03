@@ -106,7 +106,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Build Docker image
-        run: docker build -t pwa-soundboard:smoke .
+        run: docker build -t pwa-soundboard:smoke -f docker/Dockerfile .
       - name: Start container and smoke test
         run: |
           set -euo pipefail

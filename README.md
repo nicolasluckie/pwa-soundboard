@@ -164,7 +164,6 @@ pwa-soundboard/
 ├── .github/
 │   └── workflows/         # CI & Release GitHub Actions
 ├── .husky/                # Git hooks (pre-commit, commit-msg)
-├── audio/                 # Source audio archive (your original files)
 ├── client/                # React + Vite frontend
 │   ├── public/
 │   │   └── samples/       # Audio files served by the app
@@ -174,12 +173,18 @@ pwa-soundboard/
 │       ├── e2e/           # Playwright e2e tests
 │       ├── hooks/         # Custom React hooks (useAudio)
 │       └── test/          # Vitest unit tests
+├── data/                  # Audio archive + samples.json (mounted into container)
+│   ├── audio/             # Source audio archive (your original files)
+│   └── samples.json       # Sound metadata
+├── docker/                # Docker build + compose overrides
+│   ├── Dockerfile         # Multi-stage Docker build
+│   ├── compose.dev.yaml   # Dev override (build from source)
+│   └── compose.prod.yaml  # Prod override (pull prebuilt image)
 ├── server/                # Node.js + Express static server
 ├── scripts/               # Utility scripts (version-bump, demo sound)
 ├── commitlint.config.cjs  # Conventional Commits rules
 ├── cliff.toml             # git-cliff CHANGELOG config
-├── Dockerfile             # Multi-stage Docker build
-├── compose.yaml           # Docker Compose config
+├── compose.yaml           # Base Docker Compose config
 └── README.md
 ```
 
@@ -187,10 +192,10 @@ pwa-soundboard/
 
 ## Audio Files
 
-The project has two audio directories:
+The project has two audio locations:
 
-- **`audio/`** — Source archive for your original audio files. This is where you keep your master copies. Not served directly by the app.
-- **`client/public/samples/`** — Audio files actively served by the PWA. Copy files here from `audio/` or add new ones directly.
+- **`data/audio/`** — Source archive for your original audio files. This is where you keep your master copies. Not served directly by the app.
+- **`client/public/samples/`** — Audio files actively served by the PWA. Copy files here from `data/audio/` or add new ones directly.
 
 To add a sound:
 
@@ -205,14 +210,22 @@ A demo sound is included so the app works immediately.
 
 ### Docker
 
-The project includes a multi-stage `Dockerfile` and `compose.yaml` for containerized deployment:
+The project uses a base `compose.yaml` plus environment-specific overrides in `docker/`:
+
+**Development** (build from source):
 
 ```bash
 npm run docker:build
 npm run docker:up
 ```
 
-The server listens on port 3000 by default. Configure via environment variables — see [`.env.example`](./.env.example) for all options.
+**Production** (pull prebuilt image from GHCR):
+
+```bash
+docker compose -f compose.yaml -f docker/compose.prod.yaml up -d
+```
+
+Set `NODE_ENV=production` in your `.env` to use the production override. The server listens on port 3000 by default. Configure via environment variables — see [`.env.example`](./.env.example) for all options.
 
 ### Environment Variables
 
@@ -221,6 +234,7 @@ The server listens on port 3000 by default. Configure via environment variables 
 | `HOST`         | `127.0.0.1`                | Server bind address (`0.0.0.0` for all interfaces) |
 | `PORT`         | `3000`                     | Server listen port                                 |
 | `ORIGIN`       | `http://HOST:PORT`         | Public-facing origin for CSRF origin checks        |
+| `NODE_ENV`     | `development`              | Deployment mode: `development` or `production`     |
 | `SAMPLES_DIR`  | `client/dist/samples`      | Absolute path to audio samples directory           |
 | `SAMPLES_JSON` | `SAMPLES_DIR/samples.json` | Absolute path to samples metadata file             |
 

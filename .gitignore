@@ -19,7 +19,7 @@ venv/
 !.env.example
 
 # Audio source archive (not served by the app)
-audio/
+data/audio/
 
 # Served audio files (ignore most, keep demos)
 client/public/samples/*

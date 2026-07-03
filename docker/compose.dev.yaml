@@ -1,0 +1,5 @@
+services:
+  pwa-soundboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile

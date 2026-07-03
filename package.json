@@ -19,12 +19,12 @@
     "test:unit:coverage": "npm run test:unit:coverage --prefix client",
     "test:e2e": "npm run test:e2e --prefix client",
     "test": "npm run test:unit && npm run test:e2e",
-    "docker:build": "docker compose build",
-    "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f",
-    "docker:restart": "docker compose restart",
-    "docker:rebuild": "docker compose up -d --build"
+    "docker:build": "docker compose -f compose.yaml -f docker/compose.dev.yaml build",
+    "docker:up": "docker compose -f compose.yaml -f docker/compose.dev.yaml up -d",
+    "docker:down": "docker compose -f compose.yaml -f docker/compose.dev.yaml down",
+    "docker:logs": "docker compose -f compose.yaml -f docker/compose.dev.yaml logs -f",
+    "docker:restart": "docker compose -f compose.yaml -f docker/compose.dev.yaml restart",
+    "docker:rebuild": "docker compose -f compose.yaml -f docker/compose.dev.yaml up -d --build"
   },
   "config": {
     "commitizen": {
