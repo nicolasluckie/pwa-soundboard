@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import express from 'express';
 import multer from 'multer';
 import { execFile } from 'child_process';
@@ -7,22 +7,28 @@ import { readFile, writeFile, mkdir, unlink } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const execFileAsync = promisify(execFile);
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+const execFileAsync = promisify(execFile);
+
 const HOST   = process.env.HOST   || '127.0.0.1';
 const PORT   = process.env.PORT   || 3000;
-const ORIGIN = process.env.ORIGIN || `http://${HOST}:${PORT}`;
+const ORIGINS = (process.env.ORIGIN || `http://${HOST}:${PORT}`)
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
 
+const dataPath = path.resolve(__dirname, '../data');
 const distPath = path.resolve(__dirname, '../client/dist');
 const samplesPath = process.env.SAMPLES_DIR
   ? path.resolve(process.env.SAMPLES_DIR)
-  : path.join(distPath, 'samples');
+  : path.join(dataPath, 'audio');
 const samplesJsonPath = process.env.SAMPLES_JSON
   ? path.resolve(process.env.SAMPLES_JSON)
-  : path.join(samplesPath, 'samples.json');
+  : path.join(dataPath, 'samples.json');
 
 const app = express();
 
@@ -32,7 +38,7 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 app.use((req, res, next) => {
   const origin = req.headers['origin'];
-  if (!SAFE_METHODS.has(req.method) && origin && origin !== ORIGIN) {
+  if (!SAFE_METHODS.has(req.method) && origin && !ORIGINS.includes(origin)) {
     res.status(403).json({ error: 'Forbidden: origin mismatch' });
     return;
   }

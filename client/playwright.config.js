@@ -26,8 +26,6 @@ export default defineConfig({
           HOST: '127.0.0.1',
           PORT: '3000',
           ORIGIN: 'http://localhost:3000',
-          SAMPLES_DIR: '../client/dist/samples',
-          SAMPLES_JSON: '../client/dist/samples/samples.json',
         },
       }
     : {
@@ -38,8 +36,6 @@ export default defineConfig({
           HOST: '127.0.0.1',
           PORT: '3000',
           ORIGIN: 'http://localhost:5173',
-          SAMPLES_DIR: '../client/public/samples',
-          SAMPLES_JSON: '../client/src/data/samples.json',
         },
       },
 });

@@ -229,14 +229,12 @@ Set `NODE_ENV=production` in your `.env` to use the production override. The ser
 
 ### Environment Variables
 
-| Variable       | Default                    | Description                                        |
-| -------------- | -------------------------- | -------------------------------------------------- |
-| `HOST`         | `127.0.0.1`                | Server bind address (`0.0.0.0` for all interfaces) |
-| `PORT`         | `3000`                     | Server listen port                                 |
-| `ORIGIN`       | `http://HOST:PORT`         | Public-facing origin for CSRF origin checks        |
-| `NODE_ENV`     | `development`              | Deployment mode: `development` or `production`     |
-| `SAMPLES_DIR`  | `client/dist/samples`      | Absolute path to audio samples directory           |
-| `SAMPLES_JSON` | `SAMPLES_DIR/samples.json` | Absolute path to samples metadata file             |
+| Variable   | Default            | Description                                               |
+| ---------- | ------------------ | --------------------------------------------------------- |
+| `HOST`     | `127.0.0.1`        | Server bind address (`0.0.0.0` for all interfaces)        |
+| `PORT`     | `3000`             | Server listen port                                        |
+| `ORIGIN`   | `http://HOST:PORT` | Public-facing origin(s) for CSRF checks (comma-separated) |
+| `NODE_ENV` | `development`      | Deployment mode: `development` or `production`            |
 
 ### CI/CD
 
