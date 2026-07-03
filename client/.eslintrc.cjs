@@ -5,6 +5,9 @@ module.exports = {
     es2021: true,
     node: true,
   },
+  globals: {
+    __APP_VERSION__: 'readonly',
+  },
   extends: ['eslint:recommended', 'plugin:react/recommended', 'plugin:react-hooks/recommended'],
   parserOptions: {
     ecmaFeatures: {

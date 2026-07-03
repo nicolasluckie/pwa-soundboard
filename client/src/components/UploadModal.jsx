@@ -139,7 +139,7 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="audio/*,video/*"
+                accept=".mp3,.wav,.ogg,.aac,.m4a,.flac,.wma,.mp4,.mov,.avi,.mkv,.webm,.m4v,audio/*,video/*"
                 onChange={(e) => handleFile(e.target.files[0])}
                 style={{ display: 'none' }}
               />

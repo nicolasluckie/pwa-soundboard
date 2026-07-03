@@ -548,3 +548,16 @@ body {
     transform: rotate(360deg);
   }
 }
+
+.app-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  text-align: center;
+}
+
+.app-footer .version {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+  text-decoration: none;
+}
