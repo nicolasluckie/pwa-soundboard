@@ -25,10 +25,9 @@ venv/
 !/data/audio/
 /data/audio/*
 !/data/audio/demos/
+!/data/audio/icons/
+/data/audio/icons/*
+!/data/audio/icons/demos/
 
 # User sounds (gitignored)
 /data/audio/user/
-
-# Sound icons (ignore most, keep .sample.webp files)
-client/public/icons/sounds/*
-!client/public/icons/sounds/*.sample.webp

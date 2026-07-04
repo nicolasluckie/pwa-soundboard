@@ -10,6 +10,8 @@ client/blob-report/
 .github/
 .husky/
 data/audio/user/
+data/audio/icons/*
+!data/audio/icons/demos/
 venv/
 .env
 .env.*

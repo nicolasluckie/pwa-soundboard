@@ -174,7 +174,10 @@ pwa-soundboard/
 ├── data/                  # Sound data (partially gitignored)
 │   ├── audio/
 │   │   ├── demos/         # Committed demo sounds (repo)
-│   │   └── user/          # Your personal sounds (gitignored)
+│   │   ├── user/          # Your personal sounds (gitignored)
+│   │   └── icons/
+│   │       ├── demos/     # Committed demo sound icons (repo)
+│   │       └── user/      # Your personal sound icons (gitignored)
 │   ├── demos.json         # Demo sound metadata (committed)
 │   └── user-samples.json  # User sound metadata (gitignored)
 ├── docker/                # Docker build + compose overrides

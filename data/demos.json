@@ -4,7 +4,7 @@
     "name": "Bruh Sound Effect",
     "file": "bruh-sound-effect.mp3",
     "color": "#34d399",
-    "icon": "/icons/sounds/bruh_icon.sample.webp",
+    "icon": "/icons/demos/bruh_icon.sample.webp",
     "tags": ["bruh", "meme", "reaction"]
   }
 ]

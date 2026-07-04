@@ -95,7 +95,9 @@ async function getSamples() {
 
 // --- static serving ---
 
+const iconsPath = path.join(dataPath, 'audio', 'icons');
 app.use('/samples', express.static(samplesPath));
+app.use('/icons', express.static(iconsPath));
 app.use(express.static(distPath));
 
 // --- API ---
