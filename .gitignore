@@ -16,7 +16,7 @@ client/blob-report/
 venv/
 .env
 .env.*
-!.env.example
+!.env.*.example
 
 # Audio source archive (not served by the app)
 data/audio/

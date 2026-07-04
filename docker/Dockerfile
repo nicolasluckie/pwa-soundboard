@@ -27,9 +27,6 @@ COPY server/index.js ./server/
 
 COPY --from=build /app/client/dist ./client/dist
 
-# Ensure samples directory is writable for uploads
-RUN mkdir -p /app/client/dist/samples && chmod 777 /app/client/dist/samples
-
 ENV NODE_ENV=production
 ENV PORT=3000
 
