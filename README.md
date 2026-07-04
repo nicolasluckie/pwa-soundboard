@@ -83,11 +83,9 @@
 
 | Script                       | Description                                 |
 | ---------------------------- | ------------------------------------------- |
-| `npm run dev`                | Start development server (Vite)             |
+| `npm run dev`                | Start development server (Vite + Express)   |
 | `npm run build`              | Build for production                        |
 | `npm run start`              | Start production server (Express)           |
-| `npm run install:client`     | Install client dependencies                 |
-| `npm run install:server`     | Install server dependencies                 |
 | `npm run commit`             | Launch Commitizen interactive commit prompt |
 | `npm run lint`               | Check formatting and lint client code       |
 | `npm run format`             | Auto-format client code with Prettier       |
@@ -95,12 +93,6 @@
 | `npm run test:unit:coverage` | Run unit tests with coverage report         |
 | `npm run test:e2e`           | Run e2e tests (Playwright)                  |
 | `npm test`                   | Run unit and e2e tests                      |
-| `npm run docker:build`       | Build Docker image                          |
-| `npm run docker:up`          | Start container in background               |
-| `npm run docker:down`        | Stop and remove container                   |
-| `npm run docker:restart`     | Restart container                           |
-| `npm run docker:logs`        | Follow container logs                       |
-| `npm run docker:rebuild`     | Rebuild and restart container               |
 
 ---
 
@@ -215,8 +207,8 @@ The project uses a base `compose.yaml` plus environment-specific overrides in `d
 **Development** (build from source):
 
 ```bash
-npm run docker:build
-npm run docker:up
+docker compose -f compose.yaml -f docker/compose.dev.yaml build
+docker compose -f compose.yaml -f docker/compose.dev.yaml up -d
 ```
 
 **Production** (pull prebuilt image from GHCR):
@@ -225,7 +217,7 @@ npm run docker:up
 docker compose -f compose.yaml -f docker/compose.prod.yaml up -d
 ```
 
-Set `NODE_ENV=production` in your `.env` to use the production override. The server listens on port 3000 by default. Configure via environment variables — see [`.env.example`](./.env.example) for all options.
+Set `NODE_ENV=production` in your `.env` to use the production override. The server listens on port 3000 by default. Configure via environment variables — see [`.env.dev.example`](./.env.dev.example) and [`.env.prod.example`](./.env.prod.example) for all options.
 
 ### Environment Variables
 
