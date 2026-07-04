@@ -199,6 +199,92 @@ describe('UploadModal', () => {
     expect(screen.getByText('Click or drop an image')).toBeDefined();
   });
 
+  it('appends icon to FormData when submitting with icon selected', async () => {
+    const mockSample = {
+      id: 'test',
+      name: 'Test',
+      file: 'test.mp3',
+      color: '#00d4ff',
+      emoji: '🔊',
+      tags: ['meme'],
+    };
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true, sample: mockSample }),
+    });
+
+    render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+
+    // Select audio file
+    const audioInput = document.querySelectorAll('input[type="file"]')[0];
+    const audioFile = new File(['audio'], 'test.mp3', { type: 'audio/mpeg' });
+    fireEvent.change(audioInput, { target: { files: [audioFile] } });
+
+    // Select icon file
+    const iconInput = document.querySelectorAll('input[type="file"]')[1];
+    const iconFile = new File(['img'], 'icon.png', { type: 'image/png' });
+    fireEvent.change(iconInput, { target: { files: [iconFile] } });
+    await waitFor(() => {
+      expect(screen.getByAltText('Icon preview')).toBeDefined();
+    });
+
+    // Fill name and submit
+    fireEvent.change(screen.getByPlaceholderText('My Cool Sound'), { target: { value: 'Test' } });
+    fireEvent.submit(document.querySelector('form'));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    const formDataCall = global.fetch.mock.calls[0];
+    const sentBody = formDataCall[1].body;
+    expect(sentBody.get('icon')).toBeInstanceOf(File);
+    expect(sentBody.get('icon').name).toBe('icon.png');
+  });
+
+  it('does not append icon to FormData when no icon selected', async () => {
+    const mockSample = {
+      id: 'test',
+      name: 'Test',
+      file: 'test.mp3',
+      color: '#00d4ff',
+      emoji: '🔊',
+      tags: ['meme'],
+    };
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true, sample: mockSample }),
+    });
+
+    render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+
+    const audioInput = document.querySelector('input[type="file"]');
+    const audioFile = new File(['audio'], 'test.mp3', { type: 'audio/mpeg' });
+    fireEvent.change(audioInput, { target: { files: [audioFile] } });
+
+    fireEvent.change(screen.getByPlaceholderText('My Cool Sound'), { target: { value: 'Test' } });
+    fireEvent.submit(document.querySelector('form'));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    const sentBody = global.fetch.mock.calls[0][1].body;
+    expect(sentBody.get('icon')).toBeNull();
+  });
+
+  it('handles icon drag-and-drop', async () => {
+    render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+    const iconZone = document.querySelector('.icon-upload');
+    const iconFile = new File(['img'], 'dropped.png', { type: 'image/png' });
+    fireEvent.drop(iconZone, {
+      dataTransfer: { files: [iconFile] },
+    });
+    await waitFor(() => {
+      expect(screen.getByAltText('Icon preview')).toBeDefined();
+    });
+  });
+
   it('handles fetch network error on upload', async () => {
     global.fetch.mockRejectedValue(new Error('Network error'));
 

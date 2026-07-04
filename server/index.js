@@ -230,14 +230,20 @@ app.post('/api/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'i
       tags,
     };
 
-    // Save icon image if provided
+    // Save icon image if provided (convert to WebP for optimization)
     const iconFile = req.files?.icon?.[0];
     if (iconFile) {
-      const iconExt = iconFile.originalname.split('.').pop()?.toLowerCase();
       const userIconsPath = path.join(iconsPath, 'user');
       await mkdir(userIconsPath, { recursive: true });
-      const iconFileName = `${slug}.${iconExt}`;
-      await writeFile(path.join(userIconsPath, iconFileName), iconFile.buffer);
+      const tmpIconInput = path.join(userIconsPath, `${slug}.tmp`);
+      const iconFileName = `${slug}.webp`;
+      const iconOutputPath = path.join(userIconsPath, iconFileName);
+      await writeFile(tmpIconInput, iconFile.buffer);
+      try {
+        await execFileAsync('ffmpeg', ['-y', '-i', tmpIconInput, '-vf', 'scale=\'min(256,iw)\':-1', iconOutputPath]);
+      } finally {
+        await unlink(tmpIconInput).catch(() => {});
+      }
       entry.icon = `/icons/user/${iconFileName}`;
     }
 

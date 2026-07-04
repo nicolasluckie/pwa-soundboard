@@ -135,3 +135,76 @@ test('upload error shows error message', async ({ page }) => {
   await expect(page.locator('.upload-error')).toHaveText('ffmpeg conversion failed');
   await expect(page.locator('.upload-dialog')).toBeVisible();
 });
+
+test('icon upload field is visible in modal', async ({ page }) => {
+  await page.locator('.upload-button').click();
+  await expect(page.locator('.upload-dialog')).toBeVisible();
+  await expect(page.getByText('Icon (optional)')).toBeVisible();
+  await expect(page.getByText('Click or drop an image')).toBeVisible();
+});
+
+test('successful upload with icon returns icon path', async ({ page }) => {
+  const uniqueName = `Icon Test ${Date.now()}`;
+
+  await page.route('**/api/upload', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        sample: {
+          id: 'icon-test-sound',
+          name: uniqueName,
+          file: 'user/icon-test-sound.mp3',
+          color: '#00d4ff',
+          emoji: '🔊',
+          icon: '/icons/user/icon-test-sound.webp',
+          tags: ['meme'],
+        },
+      }),
+    })
+  );
+
+  await page.locator('.upload-button').click();
+
+  const audioInput = page.locator('input[type="file"]').first();
+  await audioInput.setInputFiles(TEST_AUDIO_PATH);
+
+  await page.locator('input[placeholder="My Cool Sound"]').fill(uniqueName);
+
+  await page.getByRole('button', { name: 'Upload' }).click();
+
+  // Modal should close
+  await expect(page.locator('.upload-dialog')).not.toBeVisible();
+
+  // Sound should appear with icon image
+  const soundButton = page.locator('.sound-button', { hasText: uniqueName });
+  await expect(soundButton).toBeVisible();
+  const iconImg = soundButton.locator('.sound-bg-img');
+  await expect(iconImg).toBeVisible();
+  await expect(iconImg).toHaveCSS('background-image', /\/icons\/user\/icon-test-sound\.webp/);
+});
+
+test('upload rejects SVG icon files', async ({ page }) => {
+  await page.route('**/api/upload', (route) =>
+    route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: 'Invalid icon file type. Only PNG, JPG, GIF, and WebP images are allowed.',
+      }),
+    })
+  );
+
+  await page.locator('.upload-button').click();
+
+  const audioInput = page.locator('input[type="file"]').first();
+  await audioInput.setInputFiles(TEST_AUDIO_PATH);
+
+  await page.locator('input[placeholder="My Cool Sound"]').fill('SVG Test');
+
+  await page.getByRole('button', { name: 'Upload' }).click();
+
+  await expect(page.locator('.upload-error')).toContainText('Invalid icon file type');
+  await expect(page.locator('.upload-dialog')).toBeVisible();
+});
