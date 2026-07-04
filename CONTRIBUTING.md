@@ -240,22 +240,23 @@ pwa-soundboard/
 │   └── workflows/         # CI & Release GitHub Actions
 ├── .husky/                # Git hooks (pre-commit, commit-msg)
 ├── client/                # React + Vite frontend
-│   ├── public/
-│   │   └── samples/       # Audio files served by the app
 │   └── src/
 │       ├── components/    # React components
 │       ├── e2e/           # Playwright e2e tests
 │       ├── hooks/         # Custom React hooks (useAudio)
 │       └── test/          # Vitest unit tests
-├── data/                  # Audio archive + samples.json (mounted into container)
-│   ├── audio/             # Source audio archive (your original files)
-│   └── samples.json       # Sound metadata
+├── data/                  # Sound data (partially gitignored)
+│   ├── audio/
+│   │   ├── demos/         # Committed demo sounds (repo)
+│   │   └── user/          # Your personal sounds (gitignored)
+│   ├── demos.json         # Demo sound metadata (committed)
+│   └── user-samples.json  # User sound metadata (gitignored)
 ├── docker/                # Docker build + compose overrides
 │   ├── Dockerfile         # Multi-stage Docker build
 │   ├── compose.dev.yaml   # Dev override (build from source)
 │   └── compose.prod.yaml  # Prod override (pull prebuilt image)
 ├── server/                # Node.js + Express static server
-├── scripts/               # Utility scripts (version-bump, demo sound)
+├── scripts/               # Utility scripts (version-bump, add-sample)
 ├── commitlint.config.cjs  # Conventional Commits rules
 ├── cliff.toml             # git-cliff CHANGELOG config
 ├── compose.yaml           # Base Docker Compose config
@@ -268,13 +269,15 @@ See the [README](./README.md) for more detail on each directory.
 
 ## Adding Sounds
 
-There are two ways to add sounds to the soundboard:
+There are three ways to add sounds to the soundboard:
 
-1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg and updates `samples.json` automatically.
+1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/user/`, and updates `data/user-samples.json` automatically. (Requires `user` in the `SOURCES` env var.)
 
-2. **Manually** — drop an `.mp3`, `.wav`, or `.ogg` file into `client/public/samples/`, then edit `data/samples.json` to add an entry with `id`, `name`, `file`, and `color`.
+2. **Via the script** — run `./scripts/add-sample.sh` for an interactive prompt that converts and registers a sound in `data/audio/user/` and `data/user-samples.json`.
 
-See the [README](./README#audio-files) for full details.
+3. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user-samples.json` with `id`, `name`, `file`, and `color`.
+
+Demo sounds in `data/audio/demos/` are committed to the repo and work out of the box. See the [README](./README#audio-files) for full details on the `SOURCES` env var.
 
 ---
 

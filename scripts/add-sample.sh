@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # add-sample.sh — interactive script to convert screen recordings to normalized
-# MP3s and register them in samples.json
+# MP3s and register them in user-samples.json
 #
 # Usage:
 #   ./scripts/add-sample.sh                      # interactive mode
@@ -11,8 +11,8 @@ set -euo pipefail
 # Requirements: ffmpeg (brew install ffmpeg), jq (brew install jq)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SAMPLES_DIR="$SCRIPT_DIR/../data/audio"
-SAMPLES_JSON="$SCRIPT_DIR/../data/samples.json"
+SAMPLES_DIR="$SCRIPT_DIR/../data/audio/user"
+SAMPLES_JSON="$SCRIPT_DIR/../data/user-samples.json"
 
 # --- dependency checks -------------------------------------------------------
 
@@ -98,7 +98,7 @@ fi
 
 # Check for slug collision
 if jq -e --arg id "$SLUG" '.[] | select(.id == $id)' "$SAMPLES_JSON" &>/dev/null; then
-  echo "WARNING: A sample with id '$SLUG' already exists in samples.json." >&2
+  echo "WARNING: A sample with id '$SLUG' already exists in user-samples.json." >&2
   read -rp "Overwrite? [y/N] " confirm
   if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
     echo "Aborted." >&2
@@ -171,7 +171,7 @@ fi
 echo "✅ Audio converted: $OUTPUT"
 echo
 
-# --- update samples.json -----------------------------------------------------
+# --- update user-samples.json ------------------------------------------------
 
 # Build the JSON object for the new sample
 if [ -n "$ICON" ]; then
@@ -208,6 +208,6 @@ fi
 
 mv "$SAMPLES_JSON.tmp" "$SAMPLES_JSON"
 
-echo "✅ samples.json updated: '$NAME' (id: $SLUG)"
+echo "✅ user-samples.json updated: '$NAME' (id: $SLUG)"
 echo
 echo "Done! The sound is ready to use."

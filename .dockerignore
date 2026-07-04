@@ -9,7 +9,7 @@ client/blob-report/
 .git/
 .github/
 .husky/
-data/audio/
+data/audio/user/
 venv/
 .env
 .env.*

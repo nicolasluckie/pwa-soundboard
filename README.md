@@ -67,14 +67,13 @@
 
    This also installs Husky git hooks automatically via the `prepare` script.
 
-3. Set up the data directory:
+3. Set up the data directory (optional — demo sounds work out of the box):
 
    ```bash
-   cp data/samples.json.example data/samples.json
-   mkdir -p data/audio
+   mkdir -p data/audio/user
    ```
 
-   The `data/` directory is gitignored — it holds your `samples.json` metadata and `audio/` archive. The example file gives you a starting point with one demo entry.
+   The `data/` directory holds your personal sounds. Demo sounds in `data/audio/demos/` are committed and work immediately. Your user sounds in `data/audio/user/` are gitignored.
 
 4. Install Playwright browsers (for e2e tests):
 
@@ -167,23 +166,23 @@ pwa-soundboard/
 │   └── workflows/         # CI & Release GitHub Actions
 ├── .husky/                # Git hooks (pre-commit, commit-msg)
 ├── client/                # React + Vite frontend
-│   ├── public/
-│   │   └── samples/       # Audio files served by the app
 │   └── src/
 │       ├── components/    # React components
 │       ├── e2e/           # Playwright e2e tests
 │       ├── hooks/         # Custom React hooks (useAudio)
 │       └── test/          # Vitest unit tests
-├── data/                  # User data (gitignored — not committed)
-│   ├── audio/             # Audio files served by the app
-│   ├── samples.json       # Sound metadata (copy from samples.json.example)
-│   └── samples.json.example  # Starter template
+├── data/                  # Sound data (partially gitignored)
+│   ├── audio/
+│   │   ├── demos/         # Committed demo sounds (repo)
+│   │   └── user/          # Your personal sounds (gitignored)
+│   ├── demos.json         # Demo sound metadata (committed)
+│   └── user-samples.json  # User sound metadata (gitignored)
 ├── docker/                # Docker build + compose overrides
 │   ├── Dockerfile         # Multi-stage Docker build
 │   ├── compose.dev.yaml   # Dev override (build from source)
 │   └── compose.prod.yaml  # Prod override (pull prebuilt image)
 ├── server/                # Node.js + Express static server
-├── scripts/               # Utility scripts (version-bump, demo sound)
+├── scripts/               # Utility scripts (version-bump, add-sample)
 ├── commitlint.config.cjs  # Conventional Commits rules
 ├── cliff.toml             # git-cliff CHANGELOG config
 ├── compose.yaml           # Base Docker Compose config
@@ -194,18 +193,32 @@ pwa-soundboard/
 
 ## Audio Files
 
-The `data/` directory is gitignored and holds your audio files and metadata:
+Sounds are split into two sources, controlled by the `SOURCES` env var:
 
-- **`data/audio/`** — Audio files served by the app (MP3s). This is where uploaded sounds are saved and where you place your own files.
-- **`data/samples.json`** — Sound metadata. Copy `data/samples.json.example` to get started, then add entries as you add sounds.
-- **`client/public/samples/`** — Demo audio files bundled with the repo for development. These are served by Vite during `npm run dev`.
+- **`data/audio/demos/`** — Committed demo sounds (included with the repo). Metadata in `data/demos.json`.
+- **`data/audio/user/`** — Your personal sounds (gitignored). Metadata in `data/user-samples.json`.
 
-To add a sound:
+The server merges both sources on the fly when `/api/samples` is called — no cache file to maintain.
 
-1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/`, and updates `data/samples.json` automatically.
-2. **Manually** — drop an `.mp3` file into `data/audio/`, then add an entry to `data/samples.json` with `id`, `name`, `file`, and `color`.
+### Sound Sources
 
-A demo sound is included in `client/public/samples/` so the app works immediately in dev mode.
+The `SOURCES` env var controls which sources are loaded:
+
+| Value        | Behavior              |
+| ------------ | --------------------- |
+| `demos,user` | Load both (default)   |
+| `demos`      | Only repo demo sounds |
+| `user`       | Only personal sounds  |
+
+Switching is instant — just restart the server with a different `SOURCES` value.
+
+### Adding Sounds
+
+1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/user/`, and updates `data/user-samples.json` automatically. (Requires `user` in `SOURCES`.)
+2. **Via the script** — run `./scripts/add-sample.sh` for an interactive prompt that converts and registers a sound.
+3. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user-samples.json` with `id`, `name`, `file`, and `color`.
+
+Demo sounds work out of the box — no setup required.
 
 ---
 
@@ -238,6 +251,7 @@ Set `NODE_ENV=production` in your `.env` to use the production override. The ser
 | `PORT`     | `3000`             | Server listen port                                        |
 | `ORIGIN`   | `http://HOST:PORT` | Public-facing origin(s) for CSRF checks (comma-separated) |
 | `NODE_ENV` | `development`      | Deployment mode: `development` or `production`            |
+| `SOURCES`  | `demos,user`       | Sound sources to load: `demos`, `user`, or `demos,user`   |
 
 ### CI/CD
 
