@@ -10,5 +10,5 @@ services:
       PORT: "${PORT:-3000}"
       ORIGIN: "${ORIGIN:-}"
       SAMPLES_DIR: /data/audio
-      SAMPLES_JSON: /data/samples.json
+      SOURCES: "${SOURCES:-demos,user}"
     restart: unless-stopped

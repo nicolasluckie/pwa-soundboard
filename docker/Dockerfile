@@ -11,6 +11,7 @@ RUN npm install
 
 COPY client/ ./client/
 COPY server/ ./server/
+COPY data/ ./data/
 
 RUN npm run build
 

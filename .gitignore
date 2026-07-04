@@ -20,13 +20,12 @@ venv/
 
 # User data (audio archive + samples metadata — not committed)
 /data/*
-!/data/samples.json.example
+!/data/demos.json
+!/data/user-samples.json.example
+!/data/audio/demos/
 
-# Served audio files (ignore most, keep demos)
-client/public/samples/*
-!client/public/samples/fuck.mp3
-!client/public/samples/bruh-sound-effect.mp3
-!client/public/samples/yeet.mp3
+# User sounds (gitignored)
+/data/audio/user/
 
 # Sound icons (ignore most, keep .sample.webp files)
 client/public/icons/sounds/*

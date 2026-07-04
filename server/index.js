@@ -16,7 +16,7 @@ const execFileAsync = promisify(execFile);
 
 const HOST   = process.env.HOST   || '127.0.0.1';
 const PORT   = process.env.PORT   || 3000;
-const ORIGINS = (process.env.ORIGIN || `http://${HOST}:${PORT}`)
+const ORIGINS = (process.env.ORIGIN || `http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`)
   .split(',')
   .map((o) => o.trim())
   .filter(Boolean);
@@ -26,9 +26,16 @@ const distPath = path.resolve(__dirname, '../client/dist');
 const samplesPath = process.env.SAMPLES_DIR
   ? path.resolve(process.env.SAMPLES_DIR)
   : path.join(dataPath, 'audio');
-const samplesJsonPath = process.env.SAMPLES_JSON
-  ? path.resolve(process.env.SAMPLES_JSON)
-  : path.join(dataPath, 'samples.json');
+const SOURCES = new Set(
+  (process.env.SOURCES || 'demos,user')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+);
+const demosPath = path.join(dataPath, 'audio', 'demos');
+const userPath = path.join(dataPath, 'audio', 'user');
+const demosJsonPath = path.join(dataPath, 'demos.json');
+const userSamplesJsonPath = path.join(dataPath, 'user-samples.json');
 
 const app = express();
 
@@ -58,17 +65,30 @@ function makeSlug(name) {
     .replace(/^-|-$/g, '');
 }
 
-async function readSamplesJson() {
-  try {
-    const raw = await readFile(samplesJsonPath, 'utf-8');
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
-}
+async function getSamples() {
+  const samples = [];
 
-async function writeSamplesJson(data) {
-  await writeFile(samplesJsonPath, JSON.stringify(data, null, 2), 'utf-8');
+  if (SOURCES.has('demos')) {
+    try {
+      const demosRaw = await readFile(demosJsonPath, 'utf-8');
+      const demos = JSON.parse(demosRaw);
+      samples.push(...demos.map(d => ({ ...d, file: `demos/${d.file}` })));
+    } catch (err) {
+      console.warn('No demos.json found, skipping repo demos');
+    }
+  }
+
+  if (SOURCES.has('user')) {
+    try {
+      const userRaw = await readFile(userSamplesJsonPath, 'utf-8');
+      const userSamples = JSON.parse(userRaw);
+      samples.push(...userSamples.map(d => ({ ...d, file: `user/${d.file}` })));
+    } catch {
+      // user-samples.json doesn't exist, that's fine
+    }
+  }
+
+  return samples;
 }
 
 // --- static serving ---
@@ -80,10 +100,10 @@ app.use(express.static(distPath));
 
 app.get('/api/samples', async (_req, res) => {
   try {
-    const samples = await readSamplesJson();
+    const samples = await getSamples();
     res.json(samples);
   } catch (err) {
-    console.error('Failed to read samples.json:', err);
+    console.error('Failed to load samples:', err);
     res.status(500).json({ error: 'Failed to load samples' });
   }
 });
@@ -95,6 +115,10 @@ const upload = multer({
 
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {
+    if (!SOURCES.has('user')) {
+      return res.status(403).json({ error: 'Uploads disabled: user sounds source not enabled' });
+    }
+
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
@@ -118,14 +142,14 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       .filter(Boolean);
 
     // Check for slug collision
-    const existing = await readSamplesJson();
+    const existing = await getSamples();
     const collision = existing.find((s) => s.id === slug);
 
     // Write uploaded file to temp path for ffmpeg
-    const tmpInput = path.join(samplesPath, `${slug}.tmp`);
-    const outputPath = path.join(samplesPath, `${slug}.mp3`);
+    const tmpInput = path.join(userPath, `${slug}.tmp`);
+    const outputPath = path.join(userPath, `${slug}.mp3`);
 
-    await mkdir(samplesPath, { recursive: true });
+    await mkdir(userPath, { recursive: true });
 
     // Write the uploaded buffer to a temp file
     const { buffer } = req.file;
@@ -151,20 +175,27 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     const entry = {
       id: slug,
       name,
-      file: `${slug}.mp3`,
+      file: `user/${slug}.mp3`,
       color,
       emoji,
       tags,
     };
 
-    // Update samples.json
-    let samples = await readSamplesJson();
-    if (collision) {
-      samples = samples.map((s) => (s.id === slug ? entry : s));
-    } else {
-      samples.push(entry);
+    // Update user-samples.json (without the user/ prefix)
+    const userEntry = { ...entry, file: `${slug}.mp3` };
+    let userSamples = [];
+    try {
+      const userRaw = await readFile(userSamplesJsonPath, 'utf-8');
+      userSamples = JSON.parse(userRaw);
+    } catch {
+      // user-samples.json doesn't exist yet
     }
-    await writeSamplesJson(samples);
+    if (userSamples.find((s) => s.id === slug)) {
+      userSamples = userSamples.map((s) => (s.id === slug ? userEntry : s));
+    } else {
+      userSamples.push(userEntry);
+    }
+    await writeFile(userSamplesJsonPath, JSON.stringify(userSamples, null, 2), 'utf-8');
 
     console.log(`✅ Added sample: ${name} (${slug})`);
     res.json({ success: true, sample: entry });
@@ -182,4 +213,5 @@ app.get('*', (_req, res) => {
 
 app.listen(Number(PORT), HOST, () => {
   console.log(`PWA Soundboard running at http://${HOST}:${PORT}`);
+  console.log(`Sources: ${[...SOURCES].join(', ')}`);
 });
