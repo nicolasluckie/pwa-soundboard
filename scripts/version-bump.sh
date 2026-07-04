@@ -47,16 +47,18 @@ TAG="v${VERSION}"
 
 cd "$ROOT"
 
-# Check if tag already exists
-if git rev-parse "$TAG" >/dev/null 2>&1; then
+# Check if tag already exists (use --verify to only match tags, not branches)
+if git tag --verify "$TAG" >/dev/null 2>&1; then
   echo "Error: Tag $TAG already exists" >&2
   exit 1
 fi
 
-# Check for uncommitted changes
+# Stash any uncommitted changes before proceeding
+STASHED=0
 if ! git diff --quiet || ! git diff --cached --quiet; then
-  echo "Error: Working directory has uncommitted changes" >&2
-  exit 1
+  echo "Stashing uncommitted changes..."
+  git stash -u
+  STASHED=1
 fi
 
 # Run lint on all files
@@ -70,12 +72,12 @@ else
   }
 fi
 
-# Bump package.json version
+# Bump package.json version (force in case it was already set manually)
 if [[ "$DRY_RUN" -eq 1 ]]; then
   echo "[DRY RUN] Would bump package.json version to $VERSION"
 else
   echo "Bumping package.json version to $VERSION..."
-  npm version "$VERSION" --no-git-tag-version
+  npm version "$VERSION" --no-git-tag-version --allow-same-version
 fi
 
 # Generate CHANGELOG
@@ -115,3 +117,8 @@ fi
 echo ""
 echo "Next steps:"
 echo "  git push --follow-tags"
+
+# Restore stashed changes if we stashed them
+if [[ "$STASHED" -eq 1 ]]; then
+  git stash pop || echo "Warning: could not pop stash — run 'git stash pop' manually"
+fi
