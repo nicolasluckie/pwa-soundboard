@@ -250,7 +250,14 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 // --- SPA fallback ---
 
 app.get('*', (_req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+  const indexFile = path.join(distPath, 'index.html');
+  res.sendFile(indexFile, (err) => {
+    if (err) {
+      res.status(404).json({
+        error: 'Client build not found. Run "npm run build --prefix client" or use the Vite dev server at http://localhost:5173',
+      });
+    }
+  });
 });
 
 app.use((err, _req, res, _next) => {

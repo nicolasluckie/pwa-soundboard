@@ -20,6 +20,7 @@ venv/
 
 # User data (audio archive + samples metadata — not committed)
 /data/*
+server/data/
 !/data/demos.json
 !/data/audio/
 /data/audio/*
