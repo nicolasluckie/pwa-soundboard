@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![PWA](https://img.shields.io/badge/PWA-Installable-success?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![Version](https://img.shields.io/github/v/release/nicolasluckie/pwa-soundboard)](https://github.com/nicolasluckie/pwa-soundboard/releases)
-[![CI](https://img.shields.io/github/actions/workflow/status/nicolasluckie/pwa-soundboard/ci.yml)](https://github.com/nicolasluckie/pwa-soundboard/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/nicolasluckie/pwa-soundboard/ci-release.yml)](https://github.com/nicolasluckie/pwa-soundboard/actions/workflows/ci-release.yml)
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)](https://react.dev)
 
 </div>
@@ -240,8 +240,10 @@ Set `NODE_ENV=production` in your `.env` to use the production override. The ser
 
 GitHub Actions workflows handle CI and releases:
 
-- **CI** (`.github/workflows/ci.yml`) — runs on push to `main` and PRs: lint, unit tests (with coverage + badge), build, e2e tests
-- **Release** (`.github/workflows/release.yml`) — builds multi-arch Docker images (amd64 + arm64), scans with Trivy, pushes to GHCR, and promotes release tags
+- **CI & Release** (`.github/workflows/ci-release.yml`) — combined workflow with conditional job execution:
+  - On PRs: lint, unit tests (with coverage + badge), build, e2e tests
+  - On push to `main`: CI jobs + multi-arch Docker build (amd64 + arm64), Trivy scan, GHCR push, attestation
+  - On `v*` tags: release tag promotion to versioned images
 
 Docker images are published to `ghcr.io/nicolasluckie/pwa-soundboard`.
 
