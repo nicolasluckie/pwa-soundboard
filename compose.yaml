@@ -5,11 +5,5 @@ services:
       - "${PORT:-3000}:${PORT:-3000}"
     volumes:
       - ./data:/data
-    environment:
-      HOST: "${HOST:-0.0.0.0}"
-      PORT: "${PORT:-3000}"
-      ORIGIN: "${ORIGIN:-}"
-      DATA_DIR: /data
-      SAMPLES_DIR: /data/audio
-      SOURCES: "${SOURCES:-demos,user}"
+    env_file: .env
     restart: unless-stopped

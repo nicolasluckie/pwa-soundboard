@@ -79,6 +79,24 @@ test('upload button is enabled with file and name', async ({ page }) => {
 test('successful upload adds sound to grid', async ({ page }) => {
   const uniqueName = `E2E Test ${Date.now()}`;
 
+  await page.route('**/api/upload', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        sample: {
+          id: 'e2e-test-sound',
+          name: uniqueName,
+          file: 'user/e2e-test-sound.mp3',
+          color: '#00d4ff',
+          emoji: '🔊',
+          tags: ['meme'],
+        },
+      }),
+    })
+  );
+
   await page.locator('.upload-button').click();
 
   const fileInput = page.locator('input[type="file"]');

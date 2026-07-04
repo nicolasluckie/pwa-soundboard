@@ -21,13 +21,9 @@ venv/
 # User data (audio archive + samples metadata — not committed)
 /data/*
 !/data/demos.json
-!/data/user-samples.json.example
 !/data/audio/
 /data/audio/*
 !/data/audio/demos/
 !/data/audio/icons/
 /data/audio/icons/*
 !/data/audio/icons/demos/
-
-# User sounds (gitignored)
-/data/audio/user/
