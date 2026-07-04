@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-07-04
+
+### Added
+
+- ⚠ **BREAKING CHANGE:** V1.0.2 — icon uploads, sound source separation, CI consolidation ([#3](https://github.com/nicolasluckie/pwa-soundboard/issues/3)) ([`8e8577e`](https://github.com/nicolasluckie/pwa-soundboard/commit/8e8577e6e8a597078fd40768f6806807980daae2))
+
+### Changed
+
+- Streamline badge display and reorder ([`fd69308`](https://github.com/nicolasluckie/pwa-soundboard/commit/fd69308f8231efb242e324d807c49b04011a1579))
+
 ## [1.0.1] - 2026-07-02
 
 ### Fixed
