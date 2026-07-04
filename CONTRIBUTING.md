@@ -256,7 +256,7 @@ pwa-soundboard/
 │   ├── compose.dev.yaml   # Dev override (build from source)
 │   └── compose.prod.yaml  # Prod override (pull prebuilt image)
 ├── server/                # Node.js + Express static server
-├── scripts/               # Utility scripts (version-bump, add-sample)
+├── scripts/               # Utility scripts (version-bump)
 ├── commitlint.config.cjs  # Conventional Commits rules
 ├── cliff.toml             # git-cliff CHANGELOG config
 ├── compose.yaml           # Base Docker Compose config
@@ -269,13 +269,11 @@ See the [README](./README.md) for more detail on each directory.
 
 ## Adding Sounds
 
-There are three ways to add sounds to the soundboard:
+There are two ways to add sounds to the soundboard:
 
 1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/user/`, and updates `data/user-samples.json` automatically. (Requires `user` in the `SOURCES` env var.)
 
-2. **Via the script** — run `./scripts/add-sample.sh` for an interactive prompt that converts and registers a sound in `data/audio/user/` and `data/user-samples.json`.
-
-3. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user-samples.json` with `id`, `name`, `file`, and `color`.
+2. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user-samples.json` with `id`, `name`, `file`, and `color`.
 
 Demo sounds in `data/audio/demos/` are committed to the repo and work out of the box. See the [README](./README#audio-files) for full details on the `SOURCES` env var.
 

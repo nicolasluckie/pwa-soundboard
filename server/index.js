@@ -143,10 +143,6 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       .map((t) => t.trim())
       .filter(Boolean);
 
-    // Check for slug collision
-    const existing = await getSamples();
-    const collision = existing.find((s) => s.id === slug);
-
     // Write uploaded file to temp path for ffmpeg
     const tmpInput = path.join(userPath, `${slug}.tmp`);
     const outputPath = path.join(userPath, `${slug}.mp3`);

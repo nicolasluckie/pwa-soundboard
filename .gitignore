@@ -22,6 +22,8 @@ venv/
 /data/*
 !/data/demos.json
 !/data/user-samples.json.example
+!/data/audio/
+/data/audio/*
 !/data/audio/demos/
 
 # User sounds (gitignored)
