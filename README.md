@@ -1,4 +1,5 @@
 <a name="readme-top"></a>
+
 <h1 align="center">PWA Soundboard</h1>
 
 <p align="center">React + Vite PWA soundboard — dark launchpad grid, instant search, overlapping playback, and offline audio caching. Drop in your own MP3s, update a JSON file, and launch via a tiny Express server. Installable on mobile and desktop.</p>
@@ -161,7 +162,6 @@ pwa-soundboard/
 │   │   └── samples/       # Audio files served by the app
 │   └── src/
 │       ├── components/    # React components
-│       ├── data/          # samples.json — sound metadata
 │       ├── e2e/           # Playwright e2e tests
 │       ├── hooks/         # Custom React hooks (useAudio)
 │       └── test/          # Vitest unit tests
@@ -192,7 +192,7 @@ The project has two audio locations:
 To add a sound:
 
 1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg and updates `samples.json` automatically.
-2. **Manually** — drop an `.mp3`, `.wav`, or `.ogg` file into `client/public/samples/`, then edit `client/src/data/samples.json` to add an entry with `id`, `name`, `file`, and `color`.
+2. **Manually** — drop an `.mp3`, `.wav`, or `.ogg` file into `client/public/samples/`, then edit `data/samples.json` to add an entry with `id`, `name`, `file`, and `color`.
 
 A demo sound is included so the app works immediately.
 
@@ -256,4 +256,4 @@ This bumps `package.json`, generates `CHANGELOG.md`, and creates a `v1.0.0` tag.
 
 [MIT](./LICENSE)
 
-<p align="right">(<a href="#readme-top">back to top</a>)
+<p align="right">(<a href="#readme-top">back to top</a>)</p>

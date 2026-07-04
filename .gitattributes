@@ -1,0 +1,33 @@
+# Auto-detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Force LF for shell scripts (required for Docker/Linux)
+*.sh text eol=lf
+
+# Treat lockfiles as binary to keep PR diffs clean
+package-lock.json binary
+client/package-lock.json binary
+server/package-lock.json binary
+
+# Binary assets — no line ending normalization
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.svg binary
+*.ico binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.mp4 binary
+*.webm binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary
+*.pdf binary
+
+# CI-generated test badge — exclude from language stats
+client/test-results/badge.svg linguist-generated=true
