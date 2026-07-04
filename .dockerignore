@@ -9,10 +9,12 @@ client/blob-report/
 .git/
 .github/
 .husky/
-audio/
+data/audio/user/
+data/audio/icons/*
+!data/audio/icons/demos/
 venv/
 .env
 .env.*
-!.env.example
+!.env.*.example
 *.log
 .DS_Store

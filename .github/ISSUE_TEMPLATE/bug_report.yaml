@@ -1,0 +1,159 @@
+name: Bug Report
+description: Create a detailed bug report to help us improve PWA Soundboard.
+title: "issue: "
+labels: ["bug", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Bug Report
+
+        ## Important Notes
+
+        - **Before submitting a bug report**: Please check the [Issues](https://github.com/nicolasluckie/pwa-soundboard/issues) to see if a similar issue has already been reported. Duplicates may be closed without notice. **Please search both open and closed issues.**
+
+        - Check for opened, **but also for (recently) CLOSED issues** as the issue you are trying to report **might already have been fixed!**
+
+        - **Respectful collaboration**: PWA Soundboard is a volunteer-driven project. Please be constructive and respectful in your communication.
+
+        - **Contributing**: If you encounter an issue, consider submitting a pull request. See [CONTRIBUTING.md](https://github.com/nicolasluckie/pwa-soundboard/blob/main/CONTRIBUTING.md) for guidelines.
+
+        - **Bug Reproducibility**: If a bug cannot be reproduced using the latest version on `main` (via `npm run dev` or Docker), it may be difficult to address. Please ensure you can reproduce on a clean setup.
+
+        - **Scope**: If you want to report a SECURITY VULNERABILITY, report it privately via [GitHub Security Advisories](https://github.com/nicolasluckie/pwa-soundboard/security/advisories/new). Do NOT open a public issue.
+
+  - type: checkboxes
+    id: issue-check
+    attributes:
+      label: Check Existing Issues
+      description: Confirm that you’ve checked for existing reports before submitting a new one.
+      options:
+        - label: I have searched for any existing and/or related issues.
+          required: true
+        - label: I have also searched in the CLOSED issues and found no related items (your issue might already be fixed!).
+          required: true
+
+  - type: dropdown
+    id: installation-method
+    attributes:
+      label: Installation Method
+      description: How did you install PWA Soundboard?
+      options:
+        - Git Clone (npm run dev)
+        - Docker (compose.dev.yaml)
+        - Docker (compose.prod.yaml — prebuilt GHCR image)
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: PWA Soundboard Version
+      description: Specify the version (e.g., v1.0.1) or the commit SHA if running from source.
+    validations:
+      required: true
+
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating System
+      description: Specify the OS (e.g., Windows 10, macOS Sonoma, Ubuntu 22.04, Debian 12)
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser (if applicable)
+      description: Specify the browser/version (e.g., Chrome 100.0, Firefox 98.0)
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      description: Ensure the following prerequisites have been met.
+      options:
+        - label: I have read and followed all instructions in `README.md`.
+          required: true
+        - label: I have included the browser console logs.
+          required: true
+        - label: I have included the Docker container logs.
+          required: false
+        - label: I have **provided every relevant configuration, setting, and environment variable used in my setup.**
+          required: true
+        - label: I have clearly **listed every relevant configuration, custom setting, environment variable, and command-line option that influences my setup** (such as Docker Compose overrides, .env values, browser settings, authentication configurations, etc).
+          required: true
+        - label: |
+            I have documented **step-by-step reproduction instructions that are precise, sequential, and leave nothing to interpretation**. My steps:
+            - Start with the initial platform/version/OS and dependencies used,
+            - Specify exact install/launch/configure commands,
+            - List URLs visited, user input (incl. example values/emails/passwords if needed),
+            - Describe all options and toggles enabled or changed,
+            - Include any files or environmental changes,
+            - Identify the expected and actual result at each stage,
+            - Ensure any reasonably skilled user can follow and hit the same issue.
+          required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: Describe what should have happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: Describe what actually happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to Reproduce
+      description: |
+        Please provide a **very detailed, step-by-step guide** to reproduce the issue. Your instructions should be so clear and precise that anyone can follow them without guesswork. Include every relevant detail—settings, configuration options, exact commands used, values entered, and any prerequisites or environment variables.  
+        **If full reproduction steps and all relevant settings are not provided, your issue may not be addressed.**
+        **If your steps to reproduction are incomplete, lacking detail or not reproducible, your issue can not be addressed.**
+
+      placeholder: |
+        Example (include every detail):
+        1. Clone the repo: git clone https://github.com/nicolasluckie/pwa-soundboard.git
+        2. Run npm install
+        3. Start dev server: npm run dev
+        4. Open Chrome and go to http://localhost:5173
+        5. Click a sound button in the launchpad grid
+        6. Observe that no audio plays and a console error appears
+
+        Please list each step carefully and include all relevant configuration, settings, and options.
+    validations:
+      required: true
+  - type: textarea
+    id: logs-screenshots
+    attributes:
+      label: Logs & Screenshots
+      description: Include relevant logs, errors, or screenshots to help diagnose the issue.
+      placeholder: "Attach logs from the browser console, Docker logs, or error messages."
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Provide any extra details that may assist in understanding the issue.
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Note
+        **If the bug report is incomplete, does not follow instructions or is lacking details it may not be addressed.** Ensure that you've followed the **README.md** guidelines, and provide all necessary information for us to reproduce the issue.
+        Thank you for contributing to PWA Soundboard!

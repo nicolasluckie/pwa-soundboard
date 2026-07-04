@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node -e \"require('fs').mkdirSync('dist/samples',{recursive:true});require('fs').copyFileSync('src/data/samples.json','dist/samples/samples.json')\"",
+    "build": "vite build",
     "preview": "vite preview",
     "lint": "prettier --check . && eslint .",
     "format": "prettier --write .",

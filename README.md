@@ -1,4 +1,5 @@
 <a name="readme-top"></a>
+
 <h1 align="center">PWA Soundboard</h1>
 
 <p align="center">React + Vite PWA soundboard — dark launchpad grid, instant search, overlapping playback, and offline audio caching. Drop in your own MP3s, update a JSON file, and launch via a tiny Express server. Installable on mobile and desktop.</p>
@@ -8,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![PWA](https://img.shields.io/badge/PWA-Installable-success?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![Version](https://img.shields.io/github/v/release/nicolasluckie/pwa-soundboard)](https://github.com/nicolasluckie/pwa-soundboard/releases)
-[![CI](https://img.shields.io/github/actions/workflow/status/nicolasluckie/pwa-soundboard/ci.yml)](https://github.com/nicolasluckie/pwa-soundboard/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/nicolasluckie/pwa-soundboard/ci-release.yml)](https://github.com/nicolasluckie/pwa-soundboard/actions/workflows/ci-release.yml)
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)](https://react.dev)
 
 </div>
@@ -66,13 +67,21 @@
 
    This also installs Husky git hooks automatically via the `prepare` script.
 
-3. Install Playwright browsers (for e2e tests):
+3. Set up the data directory (optional — demo sounds work out of the box):
+
+   ```bash
+   mkdir -p data/audio/user
+   ```
+
+   The `data/` directory holds your personal sounds. Demo sounds in `data/audio/demos/` are committed and work immediately. Your user sounds in `data/audio/user/` are gitignored.
+
+4. Install Playwright browsers (for e2e tests):
 
    ```bash
    npx playwright install chromium
    ```
 
-4. Start the development server:
+5. Start the development server:
    ```bash
    npm run dev
    ```
@@ -83,11 +92,9 @@
 
 | Script                       | Description                                 |
 | ---------------------------- | ------------------------------------------- |
-| `npm run dev`                | Start development server (Vite)             |
+| `npm run dev`                | Start development server (Vite + Express)   |
 | `npm run build`              | Build for production                        |
 | `npm run start`              | Start production server (Express)           |
-| `npm run install:client`     | Install client dependencies                 |
-| `npm run install:server`     | Install server dependencies                 |
 | `npm run commit`             | Launch Commitizen interactive commit prompt |
 | `npm run lint`               | Check formatting and lint client code       |
 | `npm run format`             | Auto-format client code with Prettier       |
@@ -95,12 +102,6 @@
 | `npm run test:unit:coverage` | Run unit tests with coverage report         |
 | `npm run test:e2e`           | Run e2e tests (Playwright)                  |
 | `npm test`                   | Run unit and e2e tests                      |
-| `npm run docker:build`       | Build Docker image                          |
-| `npm run docker:up`          | Start container in background               |
-| `npm run docker:down`        | Stop and remove container                   |
-| `npm run docker:restart`     | Restart container                           |
-| `npm run docker:logs`        | Follow container logs                       |
-| `npm run docker:rebuild`     | Rebuild and restart container               |
 
 ---
 
@@ -164,22 +165,30 @@ pwa-soundboard/
 ├── .github/
 │   └── workflows/         # CI & Release GitHub Actions
 ├── .husky/                # Git hooks (pre-commit, commit-msg)
-├── audio/                 # Source audio archive (your original files)
 ├── client/                # React + Vite frontend
-│   ├── public/
-│   │   └── samples/       # Audio files served by the app
 │   └── src/
 │       ├── components/    # React components
-│       ├── data/          # samples.json — sound metadata
 │       ├── e2e/           # Playwright e2e tests
 │       ├── hooks/         # Custom React hooks (useAudio)
 │       └── test/          # Vitest unit tests
+├── data/                  # Sound data (partially gitignored)
+│   ├── audio/
+│   │   ├── demos/         # Committed demo sounds (repo)
+│   │   ├── user/          # Your personal sounds (gitignored)
+│   │   └── icons/
+│   │       ├── demos/     # Committed demo sound icons (repo)
+│   │       └── user/      # Your personal sound icons (gitignored)
+│   ├── demos.json         # Demo sound metadata (committed)
+│   └── user-samples.json  # User sound metadata (gitignored)
+├── docker/                # Docker build + compose overrides
+│   ├── Dockerfile         # Multi-stage Docker build
+│   ├── compose.dev.yaml   # Dev override (build from source)
+│   └── compose.prod.yaml  # Prod override (pull prebuilt image)
 ├── server/                # Node.js + Express static server
-├── scripts/               # Utility scripts (version-bump, demo sound)
+├── scripts/               # Utility scripts (version-bump)
 ├── commitlint.config.cjs  # Conventional Commits rules
 ├── cliff.toml             # git-cliff CHANGELOG config
-├── Dockerfile             # Multi-stage Docker build
-├── compose.yaml           # Docker Compose config
+├── compose.yaml           # Base Docker Compose config
 └── README.md
 ```
 
@@ -187,17 +196,31 @@ pwa-soundboard/
 
 ## Audio Files
 
-The project has two audio directories:
+Sounds are split into two sources, controlled by the `SOURCES` env var:
 
-- **`audio/`** — Source archive for your original audio files. This is where you keep your master copies. Not served directly by the app.
-- **`client/public/samples/`** — Audio files actively served by the PWA. Copy files here from `audio/` or add new ones directly.
+- **`data/audio/demos/`** — Committed demo sounds (included with the repo). Metadata in `data/demos.json`.
+- **`data/audio/user/`** — Your personal sounds (gitignored). Metadata in `data/user-samples.json`.
 
-To add a sound:
+The server merges both sources on the fly when `/api/samples` is called — no cache file to maintain.
 
-1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg and updates `samples.json` automatically.
-2. **Manually** — drop an `.mp3`, `.wav`, or `.ogg` file into `client/public/samples/`, then edit `client/src/data/samples.json` to add an entry with `id`, `name`, `file`, and `color`.
+### Sound Sources
 
-A demo sound is included so the app works immediately.
+The `SOURCES` env var controls which sources are loaded:
+
+| Value        | Behavior              |
+| ------------ | --------------------- |
+| `demos,user` | Load both (default)   |
+| `demos`      | Only repo demo sounds |
+| `user`       | Only personal sounds  |
+
+Switching is instant — just restart the server with a different `SOURCES` value.
+
+### Adding Sounds
+
+1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/user/`, and updates `data/user-samples.json` automatically. (Requires `user` in `SOURCES`.)
+2. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user-samples.json` with `id`, `name`, `file`, and `color`.
+
+Demo sounds work out of the box — no setup required.
 
 ---
 
@@ -205,31 +228,42 @@ A demo sound is included so the app works immediately.
 
 ### Docker
 
-The project includes a multi-stage `Dockerfile` and `compose.yaml` for containerized deployment:
+The project uses a base `compose.yaml` plus environment-specific overrides in `docker/`:
+
+**Development** (build from source):
 
 ```bash
-npm run docker:build
-npm run docker:up
+docker compose -f compose.yaml -f docker/compose.dev.yaml build
+docker compose -f compose.yaml -f docker/compose.dev.yaml up -d
 ```
 
-The server listens on port 3000 by default. Configure via environment variables — see [`.env.example`](./.env.example) for all options.
+**Production** (pull prebuilt image from GHCR):
+
+```bash
+docker compose -f compose.yaml -f docker/compose.prod.yaml up -d
+```
+
+Set `NODE_ENV=production` in your `.env` to use the production override. The server listens on port 3000 by default. Configure via environment variables — see [`.env.dev.example`](./.env.dev.example) and [`.env.prod.example`](./.env.prod.example) for all options.
 
 ### Environment Variables
 
-| Variable       | Default                    | Description                                        |
-| -------------- | -------------------------- | -------------------------------------------------- |
-| `HOST`         | `127.0.0.1`                | Server bind address (`0.0.0.0` for all interfaces) |
-| `PORT`         | `3000`                     | Server listen port                                 |
-| `ORIGIN`       | `http://HOST:PORT`         | Public-facing origin for CSRF origin checks        |
-| `SAMPLES_DIR`  | `client/dist/samples`      | Absolute path to audio samples directory           |
-| `SAMPLES_JSON` | `SAMPLES_DIR/samples.json` | Absolute path to samples metadata file             |
+| Variable   | Default            | Description                                               |
+| ---------- | ------------------ | --------------------------------------------------------- |
+| `HOST`     | `127.0.0.1`        | Server bind address (`0.0.0.0` for all interfaces)        |
+| `PORT`     | `3000`             | Server listen port                                        |
+| `ORIGIN`   | `http://HOST:PORT` | Public-facing origin(s) for CSRF checks (comma-separated) |
+| `NODE_ENV` | `development`      | Deployment mode: `development` or `production`            |
+| `SOURCES`  | `demos,user`       | Sound sources to load: `demos`, `user`, or `demos,user`   |
+| `DATA_DIR` | `../data`          | Data directory path (set to `/data` in Docker)            |
 
 ### CI/CD
 
 GitHub Actions workflows handle CI and releases:
 
-- **CI** (`.github/workflows/ci.yml`) — runs on push to `main` and PRs: lint, unit tests (with coverage + badge), build, e2e tests
-- **Release** (`.github/workflows/release.yml`) — builds multi-arch Docker images (amd64 + arm64), scans with Trivy, pushes to GHCR, and promotes release tags
+- **CI & Release** (`.github/workflows/ci-release.yml`) — combined workflow with conditional job execution:
+  - On PRs: lint, unit tests (with coverage + badge), build, e2e tests
+  - On push to `main`: CI jobs + multi-arch Docker build (amd64 + arm64), Trivy scan, GHCR push, attestation
+  - On `v*` tags: release tag promotion to versioned images
 
 Docker images are published to `ghcr.io/nicolasluckie/pwa-soundboard`.
 
@@ -250,4 +284,4 @@ This bumps `package.json`, generates `CHANGELOG.md`, and creates a `v1.0.0` tag.
 
 [MIT](./LICENSE)
 
-<p align="right">(<a href="#readme-top">back to top</a>)
+<p align="right">(<a href="#readme-top">back to top</a>)</p>

@@ -1,0 +1,70 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "feat: "
+labels: ["triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Before Submitting
+
+        Please check **open AND closed** [Issues](https://github.com/nicolasluckie/pwa-soundboard/issues) for similar requests. If you find one, add your input there instead.
+
+        ### Scope Guidelines
+
+        Feature requests that require significant implementation effort should include a clear rationale and, where possible, a rough implementation plan. This keeps the Issues tab focused on actionable items.
+
+        ### Be Respectful
+
+        PWA Soundboard is a volunteer-driven project. We value constructive, positive communication. Please be mindful of maintainers' time and energy.
+
+        ### Contributing
+
+        If you'd like to implement this feature yourself, see [CONTRIBUTING.md](https://github.com/nicolasluckie/pwa-soundboard/blob/main/CONTRIBUTING.md) for development setup and guidelines.
+
+  - type: checkboxes
+    id: existing-issue
+    attributes:
+      label: Check Existing Issues
+      description: Confirm you have searched for similar requests.
+      options:
+        - label: I have searched all existing **open AND closed** issues and found none comparable to my request.
+          required: true
+
+  - type: checkboxes
+    id: feature-scope
+    attributes:
+      label: Verify Feature Scope
+      description: Confirm this request is appropriately scoped for an issue.
+      options:
+        - label: I believe this feature request is appropriately scoped and includes a clear rationale.
+          required: true
+
+  - type: textarea
+    id: problem-description
+    attributes:
+      label: Problem Description
+      description: Is this related to a problem? Describe the pain point clearly.
+      placeholder: "e.g., I'm frustrated when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution-description
+    attributes:
+      label: Proposed Solution
+      description: Describe what you would like to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives-considered
+    attributes:
+      label: Alternatives Considered
+      description: Describe any alternative solutions or workarounds you have considered.
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, mockups, or screenshots about the feature request.

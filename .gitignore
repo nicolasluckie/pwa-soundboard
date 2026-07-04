@@ -16,17 +16,15 @@ client/blob-report/
 venv/
 .env
 .env.*
-!.env.example
+!.env.*.example
 
-# Audio source archive (not served by the app)
-audio/
-
-# Served audio files (ignore most, keep demos)
-client/public/samples/*
-!client/public/samples/fuck.mp3
-!client/public/samples/bruh-sound-effect.mp3
-!client/public/samples/yeet.mp3
-
-# Sound icons (ignore most, keep .sample.webp files)
-client/public/icons/sounds/*
-!client/public/icons/sounds/*.sample.webp
+# User data (audio archive + samples metadata — not committed)
+/data/*
+server/data/
+!/data/demos.json
+!/data/audio/
+/data/audio/*
+!/data/audio/demos/
+!/data/audio/icons/
+/data/audio/icons/*
+!/data/audio/icons/demos/

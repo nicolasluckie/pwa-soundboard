@@ -91,6 +91,17 @@ function App() {
             <p className="empty">No sounds match &quot;{query}&quot;.</p>
           )}
         </main>
+
+        <footer className="app-footer">
+          <a
+            className="version"
+            href="https://github.com/nicolasluckie/pwa-soundboard/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            v{__APP_VERSION__}
+          </a>
+        </footer>
       </div>
       <PreloadModal visible={preloading} count={preloadCount} total={preloadTotal} />
       <UploadModal

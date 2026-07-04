@@ -1,16 +1,9 @@
 services:
   pwa-soundboard:
-    build: .
     container_name: pwa-soundboard
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     volumes:
-      - ./audio:/samples # bind-mount your local audio files here
-      - ./data/samples.json:/samples/samples.json # persist sample metadata
-    environment:
-      HOST: "${HOST:-0.0.0.0}"
-      PORT: "${PORT:-3000}"
-      ORIGIN: "${ORIGIN:-}"
-      SAMPLES_DIR: /samples
-      SAMPLES_JSON: /samples/samples.json
+      - ./data:/data
+    env_file: .env
     restart: unless-stopped

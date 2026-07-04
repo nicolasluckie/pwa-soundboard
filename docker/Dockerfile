@@ -11,6 +11,7 @@ RUN npm install
 
 COPY client/ ./client/
 COPY server/ ./server/
+COPY data/ ./data/
 
 RUN npm run build
 
@@ -26,9 +27,11 @@ RUN cd server && npm ci --omit=dev && cd ..
 COPY server/index.js ./server/
 
 COPY --from=build /app/client/dist ./client/dist
+COPY --from=build /app/data/demos.json ./data/demos.json
+COPY --from=build /app/data/audio/demos ./data/audio/demos
+COPY --from=build /app/data/audio/icons/demos ./data/audio/icons/demos
 
-# Ensure samples directory is writable for uploads
-RUN mkdir -p /app/client/dist/samples && chmod 777 /app/client/dist/samples
+RUN mkdir -p data/audio/user && echo '[]' > data/user-samples.json
 
 ENV NODE_ENV=production
 ENV PORT=3000

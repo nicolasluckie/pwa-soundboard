@@ -1,28 +1,59 @@
-import 'dotenv/config';
 import express from 'express';
 import multer from 'multer';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { readFile, writeFile, mkdir, unlink } from 'fs/promises';
+import { readFile, writeFile, mkdir, unlink, rename, access } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
-const execFileAsync = promisify(execFile);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const execFileAsync = promisify(execFile);
+
 const HOST   = process.env.HOST   || '127.0.0.1';
 const PORT   = process.env.PORT   || 3000;
-const ORIGIN = process.env.ORIGIN || `http://${HOST}:${PORT}`;
+const ORIGIN_ENV = process.env.ORIGIN;
+const ORIGINS = ORIGIN_ENV
+  ? ORIGIN_ENV.split(',').map((o) => o.trim()).filter(Boolean)
+  : [];
+const ORIGIN_CHECK_ENABLED = ORIGINS.length > 0;
+if (!ORIGIN_CHECK_ENABLED) {
+  console.warn('⚠️  ORIGIN not set — origin check disabled. Set ORIGIN in production to prevent CSRF.');
+}
 
+const dataPath = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : path.resolve(__dirname, '../data');
 const distPath = path.resolve(__dirname, '../client/dist');
-const samplesPath = process.env.SAMPLES_DIR
-  ? path.resolve(process.env.SAMPLES_DIR)
-  : path.join(distPath, 'samples');
-const samplesJsonPath = process.env.SAMPLES_JSON
-  ? path.resolve(process.env.SAMPLES_JSON)
-  : path.join(samplesPath, 'samples.json');
+const samplesPath = path.join(dataPath, 'audio');
+const SOURCES = new Set(
+  (process.env.SOURCES || 'demos,user')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+);
+const demosPath = path.join(dataPath, 'audio', 'demos');
+const userPath = path.join(dataPath, 'audio', 'user');
+const demosJsonPath = path.join(dataPath, 'demos.json');
+const userSamplesJsonPath = path.join(dataPath, 'user-samples.json');
+
+const jsonMutex = { locked: false, queue: [] };
+function acquireMutex(mutex) {
+  if (!mutex.locked) {
+    mutex.locked = true;
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => mutex.queue.push(resolve));
+}
+function releaseMutex(mutex) {
+  const next = mutex.queue.shift();
+  if (next) {
+    next();
+  } else {
+    mutex.locked = false;
+  }
+}
 
 const app = express();
 
@@ -31,8 +62,9 @@ const app = express();
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 app.use((req, res, next) => {
+  if (!ORIGIN_CHECK_ENABLED) return next();
   const origin = req.headers['origin'];
-  if (!SAFE_METHODS.has(req.method) && origin && origin !== ORIGIN) {
+  if (!SAFE_METHODS.has(req.method) && origin && !ORIGINS.includes(origin)) {
     res.status(403).json({ error: 'Forbidden: origin mismatch' });
     return;
   }
@@ -44,52 +76,101 @@ app.use(express.json());
 // --- helpers ---
 
 function makeSlug(name) {
-  return name
+  const slug = name
     .toLowerCase()
     .replace(/[^a-z0-9 -]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
+  if (slug.includes('..') || slug.includes('/')) return '';
+  return slug;
 }
 
-async function readSamplesJson() {
-  try {
-    const raw = await readFile(samplesJsonPath, 'utf-8');
-    return JSON.parse(raw);
-  } catch {
-    return [];
+async function getSamples() {
+  const samples = [];
+
+  if (SOURCES.has('demos')) {
+    try {
+      const demosRaw = await readFile(demosJsonPath, 'utf-8');
+      const demos = JSON.parse(demosRaw);
+      samples.push(...demos.map(d => ({ ...d, file: `demos/${d.file}` })));
+    } catch (err) {
+      console.warn('No demos.json found, skipping repo demos');
+    }
   }
-}
 
-async function writeSamplesJson(data) {
-  await writeFile(samplesJsonPath, JSON.stringify(data, null, 2), 'utf-8');
+  if (SOURCES.has('user')) {
+    try {
+      const userRaw = await readFile(userSamplesJsonPath, 'utf-8');
+      const userSamples = JSON.parse(userRaw);
+      samples.push(...userSamples.map(d => ({ ...d, file: `user/${d.file}` })));
+    } catch {
+      // user-samples.json doesn't exist, that's fine
+    }
+  }
+
+  return samples;
 }
 
 // --- static serving ---
 
+const iconsPath = path.join(dataPath, 'audio', 'icons');
 app.use('/samples', express.static(samplesPath));
+app.use('/icons', express.static(iconsPath));
 app.use(express.static(distPath));
 
 // --- API ---
 
 app.get('/api/samples', async (_req, res) => {
   try {
-    const samples = await readSamplesJson();
+    const samples = await getSamples();
     res.json(samples);
   } catch (err) {
-    console.error('Failed to read samples.json:', err);
+    console.error('Failed to load samples:', err);
     res.status(500).json({ error: 'Failed to load samples' });
   }
 });
 
+const ALLOWED_EXTENSIONS = new Set([
+  'mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac', 'wma',
+  'mp4', 'mov', 'avi', 'mkv', 'webm', 'm4v',
+]);
+
+const ALLOWED_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp']);
+const ALLOWED_IMAGE_MIMETYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+  fileFilter: (req, file, cb) => {
+    const ext = file.originalname.split('.').pop()?.toLowerCase();
+
+    if (file.fieldname === 'icon') {
+      if (ALLOWED_IMAGE_MIMETYPES.has(file.mimetype) && ext && ALLOWED_IMAGE_EXTENSIONS.has(ext)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid icon file type. Only PNG, JPG, GIF, and WebP images are allowed.'));
+      }
+      return;
+    }
+
+    const isAudioOrVideo = file.mimetype.startsWith('audio/') || file.mimetype.startsWith('video/');
+    if (isAudioOrVideo && ext && ALLOWED_EXTENSIONS.has(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only audio and video files are allowed.'));
+    }
+  },
 });
 
-app.post('/api/upload', upload.single('file'), async (req, res) => {
+app.post('/api/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'icon', maxCount: 1 }]), async (req, res) => {
   try {
-    if (!req.file) {
+    if (!SOURCES.has('user')) {
+      return res.status(403).json({ error: 'Uploads disabled: user sounds source not enabled' });
+    }
+
+    const audioFile = req.files?.file?.[0];
+    if (!audioFile) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
@@ -111,18 +192,14 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       .map((t) => t.trim())
       .filter(Boolean);
 
-    // Check for slug collision
-    const existing = await readSamplesJson();
-    const collision = existing.find((s) => s.id === slug);
-
     // Write uploaded file to temp path for ffmpeg
-    const tmpInput = path.join(samplesPath, `${slug}.tmp`);
-    const outputPath = path.join(samplesPath, `${slug}.mp3`);
+    const tmpInput = path.join(userPath, `${slug}.tmp`);
+    const outputPath = path.join(userPath, `${slug}.mp3`);
 
-    await mkdir(samplesPath, { recursive: true });
+    await mkdir(userPath, { recursive: true });
 
     // Write the uploaded buffer to a temp file
-    const { buffer } = req.file;
+    const { buffer } = audioFile;
     await writeFile(tmpInput, buffer);
 
     // Normalize with ffmpeg
@@ -134,10 +211,12 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
         outputPath,
       ]);
     } finally {
-      try { await unlink(tmpInput); } catch {}
+      try { await unlink(tmpInput); } catch (e) { console.warn('Failed to clean up temp file:', e.message); }
     }
 
-    if (!await readFile(outputPath).then(() => true).catch(() => false)) {
+    try {
+      await access(outputPath);
+    } catch {
       return res.status(500).json({ error: 'ffmpeg conversion failed' });
     }
 
@@ -145,20 +224,51 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     const entry = {
       id: slug,
       name,
-      file: `${slug}.mp3`,
+      file: `user/${slug}.mp3`,
       color,
       emoji,
       tags,
     };
 
-    // Update samples.json
-    let samples = await readSamplesJson();
-    if (collision) {
-      samples = samples.map((s) => (s.id === slug ? entry : s));
-    } else {
-      samples.push(entry);
+    // Save icon image if provided (convert to WebP for optimization)
+    const iconFile = req.files?.icon?.[0];
+    if (iconFile) {
+      const userIconsPath = path.join(iconsPath, 'user');
+      await mkdir(userIconsPath, { recursive: true });
+      const tmpIconInput = path.join(userIconsPath, `${slug}.tmp`);
+      const iconFileName = `${slug}.webp`;
+      const iconOutputPath = path.join(userIconsPath, iconFileName);
+      await writeFile(tmpIconInput, iconFile.buffer);
+      try {
+        await execFileAsync('ffmpeg', ['-y', '-i', tmpIconInput, '-vf', 'scale=\'min(256,iw)\':-1', iconOutputPath]);
+      } finally {
+        await unlink(tmpIconInput).catch(() => {});
+      }
+      entry.icon = `/icons/user/${iconFileName}`;
     }
-    await writeSamplesJson(samples);
+
+    // Update user-samples.json (without the user/ prefix)
+    const userEntry = { ...entry, file: `${slug}.mp3` };
+    await acquireMutex(jsonMutex);
+    try {
+      let userSamples = [];
+      try {
+        const userRaw = await readFile(userSamplesJsonPath, 'utf-8');
+        userSamples = JSON.parse(userRaw);
+      } catch {
+        // user-samples.json doesn't exist yet
+      }
+      if (userSamples.find((s) => s.id === slug)) {
+        userSamples = userSamples.map((s) => (s.id === slug ? userEntry : s));
+      } else {
+        userSamples.push(userEntry);
+      }
+      const tmpJson = `${userSamplesJsonPath}.tmp`;
+      await writeFile(tmpJson, JSON.stringify(userSamples, null, 2), 'utf-8');
+      await rename(tmpJson, userSamplesJsonPath);
+    } finally {
+      releaseMutex(jsonMutex);
+    }
 
     console.log(`✅ Added sample: ${name} (${slug})`);
     res.json({ success: true, sample: entry });
@@ -171,9 +281,33 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 // --- SPA fallback ---
 
 app.get('*', (_req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+  const indexFile = path.join(distPath, 'index.html');
+  res.sendFile(indexFile, (err) => {
+    if (err) {
+      res.status(404).json({
+        error: 'Client build not found. Run "npm run build --prefix client" or use the Vite dev server at http://localhost:5173',
+      });
+    }
+  });
 });
 
-app.listen(Number(PORT), HOST, () => {
+app.use((err, _req, res, _next) => {
+  if (err instanceof multer.MulterError || err.message.includes('Invalid file type') || err.message.includes('Invalid icon file type')) {
+    return res.status(400).json({ error: err.message });
+  }
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+app.listen(Number(PORT), HOST, async () => {
+  if (SOURCES.has('user')) {
+    await mkdir(userPath, { recursive: true });
+    try {
+      await access(userSamplesJsonPath);
+    } catch {
+      await writeFile(userSamplesJsonPath, '[]', 'utf-8');
+    }
+  }
   console.log(`PWA Soundboard running at http://${HOST}:${PORT}`);
+  console.log(`Sources: ${[...SOURCES].join(', ')}`);
 });

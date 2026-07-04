@@ -15,7 +15,7 @@ test('search filters sounds', async ({ page }) => {
   await page.goto('/');
 
   // Type in search
-  await page.fill('input[placeholder*="Search"]', 'yeet');
+  await page.fill('input[placeholder*="Search"]', 'bruh');
 
   // Check that filtered results are shown
   const buttons = page.locator('.sound-button');
