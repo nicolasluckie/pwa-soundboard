@@ -170,6 +170,35 @@ describe('UploadModal', () => {
     expect(emojiInput.value).toBe('🎉');
   });
 
+  it('renders icon upload field', () => {
+    render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+    expect(screen.getByText('Icon (optional)')).toBeDefined();
+    expect(screen.getByText('Click or drop an image')).toBeDefined();
+  });
+
+  it('shows icon preview when image selected', async () => {
+    render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+    const iconInput = document.querySelectorAll('input[type="file"]')[1];
+    const iconFile = new File(['img'], 'test.png', { type: 'image/png' });
+    fireEvent.change(iconInput, { target: { files: [iconFile] } });
+    await waitFor(() => {
+      expect(screen.getByAltText('Icon preview')).toBeDefined();
+    });
+  });
+
+  it('removes icon preview when remove button clicked', async () => {
+    render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+    const iconInput = document.querySelectorAll('input[type="file"]')[1];
+    const iconFile = new File(['img'], 'test.png', { type: 'image/png' });
+    fireEvent.change(iconInput, { target: { files: [iconFile] } });
+    await waitFor(() => {
+      expect(screen.getByAltText('Icon preview')).toBeDefined();
+    });
+    const removeBtn = document.querySelector('.icon-upload-remove');
+    fireEvent.click(removeBtn);
+    expect(screen.getByText('Click or drop an image')).toBeDefined();
+  });
+
   it('handles fetch network error on upload', async () => {
     global.fetch.mockRejectedValue(new Error('Network error'));
 

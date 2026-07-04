@@ -136,11 +136,24 @@ const ALLOWED_EXTENSIONS = new Set([
   'mp4', 'mov', 'avi', 'mkv', 'webm', 'm4v',
 ]);
 
+const ALLOWED_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp']);
+const ALLOWED_IMAGE_MIMETYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
-  fileFilter: (_req, file, cb) => {
+  fileFilter: (req, file, cb) => {
     const ext = file.originalname.split('.').pop()?.toLowerCase();
+
+    if (file.fieldname === 'icon') {
+      if (ALLOWED_IMAGE_MIMETYPES.has(file.mimetype) && ext && ALLOWED_IMAGE_EXTENSIONS.has(ext)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid icon file type. Only PNG, JPG, GIF, and WebP images are allowed.'));
+      }
+      return;
+    }
+
     const isAudioOrVideo = file.mimetype.startsWith('audio/') || file.mimetype.startsWith('video/');
     if (isAudioOrVideo && ext && ALLOWED_EXTENSIONS.has(ext)) {
       cb(null, true);
@@ -150,13 +163,14 @@ const upload = multer({
   },
 });
 
-app.post('/api/upload', upload.single('file'), async (req, res) => {
+app.post('/api/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'icon', maxCount: 1 }]), async (req, res) => {
   try {
     if (!SOURCES.has('user')) {
       return res.status(403).json({ error: 'Uploads disabled: user sounds source not enabled' });
     }
 
-    if (!req.file) {
+    const audioFile = req.files?.file?.[0];
+    if (!audioFile) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
@@ -185,7 +199,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     await mkdir(userPath, { recursive: true });
 
     // Write the uploaded buffer to a temp file
-    const { buffer } = req.file;
+    const { buffer } = audioFile;
     await writeFile(tmpInput, buffer);
 
     // Normalize with ffmpeg
@@ -215,6 +229,17 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       emoji,
       tags,
     };
+
+    // Save icon image if provided
+    const iconFile = req.files?.icon?.[0];
+    if (iconFile) {
+      const iconExt = iconFile.originalname.split('.').pop()?.toLowerCase();
+      const userIconsPath = path.join(iconsPath, 'user');
+      await mkdir(userIconsPath, { recursive: true });
+      const iconFileName = `${slug}.${iconExt}`;
+      await writeFile(path.join(userIconsPath, iconFileName), iconFile.buffer);
+      entry.icon = `/icons/user/${iconFileName}`;
+    }
 
     // Update user-samples.json (without the user/ prefix)
     const userEntry = { ...entry, file: `${slug}.mp3` };
@@ -261,7 +286,7 @@ app.get('*', (_req, res) => {
 });
 
 app.use((err, _req, res, _next) => {
-  if (err instanceof multer.MulterError || err.message.includes('Invalid file type')) {
+  if (err instanceof multer.MulterError || err.message.includes('Invalid file type') || err.message.includes('Invalid icon file type')) {
     return res.status(400).json({ error: err.message });
   }
   console.error('Unhandled error:', err);

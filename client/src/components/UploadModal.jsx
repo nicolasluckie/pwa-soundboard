@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Upload, X, Loader2 } from 'lucide-react';
+import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
 
 const COLORS = [
   { name: 'red', value: '#ff6b6b' },
@@ -30,7 +30,10 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [iconFile, setIconFile] = useState(null);
+  const [iconPreview, setIconPreview] = useState('');
   const fileInputRef = useRef(null);
+  const iconInputRef = useRef(null);
 
   useEffect(() => {
     if (open) {
@@ -43,6 +46,8 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
       setError('');
       setDragOver(false);
       setUploading(false);
+      setIconFile(null);
+      setIconPreview('');
     }
   }, [open]);
 
@@ -69,6 +74,20 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
     if (dropped) handleFile(dropped);
   };
 
+  const handleIconSelect = (selected) => {
+    if (!selected) return;
+    setIconFile(selected);
+    const reader = new FileReader();
+    reader.onload = (e) => setIconPreview(e.target.result);
+    reader.readAsDataURL(selected);
+  };
+
+  const handleIconDrop = (e) => {
+    e.preventDefault();
+    const dropped = e.dataTransfer.files[0];
+    if (dropped) handleIconSelect(dropped);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file) {
@@ -91,6 +110,9 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
       formData.append('emoji', emoji);
       formData.append('color', color);
       formData.append('tags', tags);
+      if (iconFile) {
+        formData.append('icon', iconFile);
+      }
 
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -206,6 +228,46 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
                   ))}
                 </div>
               </label>
+            </div>
+
+            <div className="form-label">
+              <span>Icon (optional)</span>
+              <div
+                className={`icon-upload ${iconPreview ? 'has-icon' : ''}`}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleIconDrop}
+                onClick={() => iconInputRef.current?.click()}
+              >
+                <input
+                  ref={iconInputRef}
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp"
+                  onChange={(e) => handleIconSelect(e.target.files[0])}
+                  style={{ display: 'none' }}
+                />
+                {iconPreview ? (
+                  <div className="icon-upload-preview">
+                    <img src={iconPreview} alt="Icon preview" />
+                    <button
+                      type="button"
+                      className="icon-upload-remove"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIconFile(null);
+                        setIconPreview('');
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="icon-upload-placeholder">
+                    <ImageIcon size={20} />
+                    <span>Click or drop an image</span>
+                    <span className="icon-upload-hint">PNG, JPG, GIF, WebP</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <label className="form-label">

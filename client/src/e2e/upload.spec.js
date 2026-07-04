@@ -42,7 +42,7 @@ test('upload button is disabled without file', async ({ page }) => {
 test('name auto-fills from filename', async ({ page }) => {
   await page.locator('.upload-button').click();
 
-  const fileInput = page.locator('input[type="file"]');
+  const fileInput = page.locator('input[type="file"]').first();
   await fileInput.setInputFiles(TEST_AUDIO_PATH);
 
   await expect(page.locator('input[placeholder="My Cool Sound"]')).toHaveValue('bruh-sound-effect');
@@ -68,7 +68,7 @@ test('upload button stays disabled without file', async ({ page }) => {
 test('upload button is enabled with file and name', async ({ page }) => {
   await page.locator('.upload-button').click();
 
-  const fileInput = page.locator('input[type="file"]');
+  const fileInput = page.locator('input[type="file"]').first();
   await fileInput.setInputFiles(TEST_AUDIO_PATH);
 
   // Name auto-fills from filename, so button should be enabled
@@ -99,7 +99,7 @@ test('successful upload adds sound to grid', async ({ page }) => {
 
   await page.locator('.upload-button').click();
 
-  const fileInput = page.locator('input[type="file"]');
+  const fileInput = page.locator('input[type="file"]').first();
   await fileInput.setInputFiles(TEST_AUDIO_PATH);
 
   await page.locator('input[placeholder="My Cool Sound"]').fill(uniqueName);
@@ -125,7 +125,7 @@ test('upload error shows error message', async ({ page }) => {
 
   await page.locator('.upload-button').click();
 
-  const fileInput = page.locator('input[type="file"]');
+  const fileInput = page.locator('input[type="file"]').first();
   await fileInput.setInputFiles(TEST_AUDIO_PATH);
 
   await page.locator('input[placeholder="My Cool Sound"]').fill('Error Test');

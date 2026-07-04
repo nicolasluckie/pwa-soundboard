@@ -530,6 +530,75 @@ body {
   transform: scale(1.1);
 }
 
+.icon-upload {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+}
+
+.icon-upload:hover {
+  border-color: var(--accent);
+}
+
+.icon-upload.has-icon {
+  border-style: solid;
+  border-color: var(--accent);
+}
+
+.icon-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.icon-upload-hint {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.icon-upload-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-upload-preview img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.icon-upload-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
 .upload-error {
   color: var(--danger);
   font-size: 0.9rem;
