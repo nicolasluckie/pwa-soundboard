@@ -9,7 +9,6 @@ services:
       HOST: "${HOST:-0.0.0.0}"
       PORT: "${PORT:-3000}"
       ORIGIN: "${ORIGIN:-}"
-      NODE_ENV: "${NODE_ENV:-development}"
       SAMPLES_DIR: /data/audio
       SAMPLES_JSON: /data/samples.json
     restart: unless-stopped

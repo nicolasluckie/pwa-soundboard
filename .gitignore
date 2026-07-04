@@ -18,8 +18,9 @@ venv/
 .env.*
 !.env.*.example
 
-# Audio source archive (not served by the app)
-data/audio/
+# User data (audio archive + samples metadata — not committed)
+/data/*
+!/data/samples.json.example
 
 # Served audio files (ignore most, keep demos)
 client/public/samples/*

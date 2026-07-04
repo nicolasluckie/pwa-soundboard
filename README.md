@@ -67,13 +67,22 @@
 
    This also installs Husky git hooks automatically via the `prepare` script.
 
-3. Install Playwright browsers (for e2e tests):
+3. Set up the data directory:
+
+   ```bash
+   cp data/samples.json.example data/samples.json
+   mkdir -p data/audio
+   ```
+
+   The `data/` directory is gitignored — it holds your `samples.json` metadata and `audio/` archive. The example file gives you a starting point with one demo entry.
+
+4. Install Playwright browsers (for e2e tests):
 
    ```bash
    npx playwright install chromium
    ```
 
-4. Start the development server:
+5. Start the development server:
    ```bash
    npm run dev
    ```
@@ -165,9 +174,10 @@ pwa-soundboard/
 │       ├── e2e/           # Playwright e2e tests
 │       ├── hooks/         # Custom React hooks (useAudio)
 │       └── test/          # Vitest unit tests
-├── data/                  # Audio archive + samples.json (mounted into container)
-│   ├── audio/             # Source audio archive (your original files)
-│   └── samples.json       # Sound metadata
+├── data/                  # User data (gitignored — not committed)
+│   ├── audio/             # Audio files served by the app
+│   ├── samples.json       # Sound metadata (copy from samples.json.example)
+│   └── samples.json.example  # Starter template
 ├── docker/                # Docker build + compose overrides
 │   ├── Dockerfile         # Multi-stage Docker build
 │   ├── compose.dev.yaml   # Dev override (build from source)
@@ -184,17 +194,18 @@ pwa-soundboard/
 
 ## Audio Files
 
-The project has two audio locations:
+The `data/` directory is gitignored and holds your audio files and metadata:
 
-- **`data/audio/`** — Source archive for your original audio files. This is where you keep your master copies. Not served directly by the app.
-- **`client/public/samples/`** — Audio files actively served by the PWA. Copy files here from `data/audio/` or add new ones directly.
+- **`data/audio/`** — Audio files served by the app (MP3s). This is where uploaded sounds are saved and where you place your own files.
+- **`data/samples.json`** — Sound metadata. Copy `data/samples.json.example` to get started, then add entries as you add sounds.
+- **`client/public/samples/`** — Demo audio files bundled with the repo for development. These are served by Vite during `npm run dev`.
 
 To add a sound:
 
-1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg and updates `samples.json` automatically.
-2. **Manually** — drop an `.mp3`, `.wav`, or `.ogg` file into `client/public/samples/`, then edit `data/samples.json` to add an entry with `id`, `name`, `file`, and `color`.
+1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/`, and updates `data/samples.json` automatically.
+2. **Manually** — drop an `.mp3` file into `data/audio/`, then add an entry to `data/samples.json` with `id`, `name`, `file`, and `color`.
 
-A demo sound is included so the app works immediately.
+A demo sound is included in `client/public/samples/` so the app works immediately in dev mode.
 
 ---
 
