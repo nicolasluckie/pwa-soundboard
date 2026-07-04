@@ -9,6 +9,7 @@ services:
       HOST: "${HOST:-0.0.0.0}"
       PORT: "${PORT:-3000}"
       ORIGIN: "${ORIGIN:-}"
+      DATA_DIR: /data
       SAMPLES_DIR: /data/audio
       SOURCES: "${SOURCES:-demos,user}"
     restart: unless-stopped

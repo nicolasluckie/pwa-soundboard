@@ -252,6 +252,7 @@ Set `NODE_ENV=production` in your `.env` to use the production override. The ser
 | `ORIGIN`   | `http://HOST:PORT` | Public-facing origin(s) for CSRF checks (comma-separated) |
 | `NODE_ENV` | `development`      | Deployment mode: `development` or `production`            |
 | `SOURCES`  | `demos,user`       | Sound sources to load: `demos`, `user`, or `demos,user`   |
+| `DATA_DIR` | `../data`          | Data directory path (set to `/data` in Docker)            |
 
 ### CI/CD
 

@@ -21,7 +21,9 @@ const ORIGINS = (process.env.ORIGIN || `http://${HOST === '0.0.0.0' ? 'localhost
   .map((o) => o.trim())
   .filter(Boolean);
 
-const dataPath = path.resolve(__dirname, '../data');
+const dataPath = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : path.resolve(__dirname, '../data');
 const distPath = path.resolve(__dirname, '../client/dist');
 const samplesPath = process.env.SAMPLES_DIR
   ? path.resolve(process.env.SAMPLES_DIR)
