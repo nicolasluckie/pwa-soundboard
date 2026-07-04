@@ -285,6 +285,91 @@ describe('UploadModal', () => {
     });
   });
 
+  it('sends correct slug when uploading with duplicate slug name', async () => {
+    const mockSample = {
+      id: 'test',
+      name: 'Test',
+      file: 'test.mp3',
+      color: '#00d4ff',
+      emoji: '🔊',
+      tags: ['meme'],
+    };
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true, sample: mockSample }),
+    });
+
+    render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+
+    const audioInput = document.querySelector('input[type="file"]');
+    fireEvent.change(audioInput, {
+      target: { files: [new File(['audio'], 'test.mp3', { type: 'audio/mpeg' })] },
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('My Cool Sound'), { target: { value: 'Test' } });
+    // Explicitly set the slug to simulate a duplicate
+    fireEvent.change(screen.getByPlaceholderText('my-cool-sound'), {
+      target: { value: 'existing-slug' },
+    });
+
+    fireEvent.submit(document.querySelector('form'));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    const sentBody = global.fetch.mock.calls[0][1].body;
+    expect(sentBody.get('slug')).toBe('existing-slug');
+  });
+
+  it('sends icon file with same slug name as existing icon (overwrite)', async () => {
+    const mockSample = {
+      id: 'existing-slug',
+      name: 'Updated',
+      file: 'user/existing-slug.mp3',
+      color: '#00d4ff',
+      emoji: '🔊',
+      icon: '/icons/user/existing-slug.webp',
+      tags: ['meme'],
+    };
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true, sample: mockSample }),
+    });
+
+    render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+
+    const audioInput = document.querySelectorAll('input[type="file"]')[0];
+    fireEvent.change(audioInput, {
+      target: { files: [new File(['audio'], 'test.mp3', { type: 'audio/mpeg' })] },
+    });
+
+    const iconInput = document.querySelectorAll('input[type="file"]')[1];
+    const iconFile = new File(['img'], 'replacement.png', { type: 'image/png' });
+    fireEvent.change(iconInput, { target: { files: [iconFile] } });
+    await waitFor(() => {
+      expect(screen.getByAltText('Icon preview')).toBeDefined();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('My Cool Sound'), {
+      target: { value: 'Updated' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('my-cool-sound'), {
+      target: { value: 'existing-slug' },
+    });
+
+    fireEvent.submit(document.querySelector('form'));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    const sentBody = global.fetch.mock.calls[0][1].body;
+    expect(sentBody.get('slug')).toBe('existing-slug');
+    expect(sentBody.get('icon')).toBeInstanceOf(File);
+    expect(sentBody.get('icon').name).toBe('replacement.png');
+  });
+
   it('handles fetch network error on upload', async () => {
     global.fetch.mockRejectedValue(new Error('Network error'));
 

@@ -208,3 +208,120 @@ test('upload rejects SVG icon files', async ({ page }) => {
   await expect(page.locator('.upload-error')).toContainText('Invalid icon file type');
   await expect(page.locator('.upload-dialog')).toBeVisible();
 });
+
+test('re-upload with same slug overwrites existing sound', async ({ page }) => {
+  const firstName = `Overwrite Test ${Date.now()}`;
+  const updatedName = `Overwrite Updated ${Date.now()}`;
+  const slug = 'overwrite-test';
+
+  let uploadCount = 0;
+  await page.route('**/api/upload', (route) => {
+    uploadCount++;
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        sample: {
+          id: slug,
+          name: uploadCount === 1 ? firstName : updatedName,
+          file: `user/${slug}.mp3`,
+          color: '#00d4ff',
+          emoji: '🔊',
+          tags: ['meme'],
+        },
+      }),
+    });
+  });
+
+  // First upload
+  await page.locator('.upload-button').click();
+  await expect(page.locator('.upload-dialog')).toBeVisible();
+  await expect(page.getByText('Drop file here or click to browse')).toBeVisible();
+  await page.locator('input[type="file"]').first().setInputFiles(TEST_AUDIO_PATH);
+  await expect(page.locator('.drop-zone-file')).toBeVisible();
+  await page.locator('input[placeholder="My Cool Sound"]').fill(firstName);
+  await page.locator('input[placeholder="my-cool-sound"]').fill(slug);
+  await page.getByRole('button', { name: 'Upload' }).click();
+  await expect(page.locator('.upload-dialog')).not.toBeVisible();
+  await expect(page.getByText(firstName)).toBeVisible();
+
+  // Wait for modal to fully close before reopening
+  await page.waitForTimeout(300);
+
+  // Second upload with same slug (overwrite)
+  await page.locator('.upload-button').click();
+  await expect(page.locator('.upload-dialog')).toBeVisible();
+  await expect(page.getByText('Drop file here or click to browse')).toBeVisible();
+  await page.locator('input[type="file"]').first().setInputFiles(TEST_AUDIO_PATH);
+  await expect(page.locator('.drop-zone-file')).toBeVisible();
+  await page.locator('input[placeholder="My Cool Sound"]').fill(updatedName);
+  await page.locator('input[placeholder="my-cool-sound"]').fill(slug);
+  await page.getByRole('button', { name: 'Upload' }).click();
+  await expect(page.locator('.upload-dialog')).not.toBeVisible();
+
+  // Updated name should appear, old name should not
+  await expect(page.getByText(updatedName)).toBeVisible();
+  await expect(page.getByText(firstName)).not.toBeVisible();
+});
+
+test('re-upload with same slug overwrites existing icon', async ({ page }) => {
+  const name = `Icon Overwrite ${Date.now()}`;
+  const slug = 'icon-overwrite-test';
+
+  await page.route('**/api/upload', (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        sample: {
+          id: slug,
+          name,
+          file: `user/${slug}.mp3`,
+          color: '#00d4ff',
+          emoji: '🔊',
+          icon: `/icons/user/${slug}.webp`,
+          tags: ['meme'],
+        },
+      }),
+    });
+  });
+
+  // First upload with icon
+  await page.locator('.upload-button').click();
+  await expect(page.locator('.upload-dialog')).toBeVisible();
+  await expect(page.getByText('Drop file here or click to browse')).toBeVisible();
+  await page.locator('input[type="file"]').first().setInputFiles(TEST_AUDIO_PATH);
+  await expect(page.locator('.drop-zone-file')).toBeVisible();
+  await page.locator('input[placeholder="My Cool Sound"]').fill(name);
+  await page.locator('input[placeholder="my-cool-sound"]').fill(slug);
+  await page.getByRole('button', { name: 'Upload' }).click();
+  await expect(page.locator('.upload-dialog')).not.toBeVisible();
+
+  // Verify icon is present
+  const soundButton = page.locator('.sound-button', { hasText: name });
+  await expect(soundButton).toBeVisible();
+  await expect(soundButton.locator('.sound-bg-img')).toBeVisible();
+
+  // Wait for modal to fully close before reopening
+  await page.waitForTimeout(300);
+
+  // Second upload with same slug and new icon (overwrite)
+  await page.locator('.upload-button').click();
+  await expect(page.locator('.upload-dialog')).toBeVisible();
+  await expect(page.getByText('Drop file here or click to browse')).toBeVisible();
+  await page.locator('input[type="file"]').first().setInputFiles(TEST_AUDIO_PATH);
+  await expect(page.locator('.drop-zone-file')).toBeVisible();
+  await page.locator('input[placeholder="My Cool Sound"]').fill(name);
+  await page.locator('input[placeholder="my-cool-sound"]').fill(slug);
+  await page.getByRole('button', { name: 'Upload' }).click();
+  await expect(page.locator('.upload-dialog')).not.toBeVisible();
+
+  // Icon should still be present with same path
+  const updatedButton = page.locator('.sound-button', { hasText: name });
+  await expect(updatedButton).toBeVisible();
+  const iconImg = updatedButton.locator('.sound-bg-img');
+  await expect(iconImg).toBeVisible();
+  await expect(iconImg).toHaveCSS('background-image', /\/icons\/user\/icon-overwrite-test\.webp/);
+});
