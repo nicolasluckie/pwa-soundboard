@@ -253,7 +253,7 @@ pwa-soundboard/
 │   │       ├── demos/     # Committed demo sound icons (repo)
 │   │       └── user/      # Your personal sound icons (gitignored)
 │   ├── demos.json         # Demo sound metadata (committed)
-│   └── user-samples.json  # User sound metadata (gitignored)
+│   └── user_data.json  # User sound metadata (gitignored)
 ├── docker/                # Docker build + compose overrides
 │   ├── Dockerfile         # Multi-stage Docker build
 │   ├── compose.dev.yaml   # Dev override (build from source)
@@ -274,9 +274,9 @@ See the [README](./README.md) for more detail on each directory.
 
 There are two ways to add sounds to the soundboard:
 
-1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/user/`, and updates `data/user-samples.json` automatically. (Requires `user` in the `SOURCES` env var.)
+1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/user/`, and updates `data/user_data.json` automatically. (Requires `user` in the `SOURCES` env var.)
 
-2. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user-samples.json` with `id`, `name`, `file`, and `color`.
+2. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user_data.json` with `id`, `name`, `file`, and `color`.
 
 Demo sounds in `data/audio/demos/` are committed to the repo and work out of the box. See the [README](./README#audio-files) for full details on the `SOURCES` env var.
 

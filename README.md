@@ -42,7 +42,61 @@
 
 ## Getting Started
 
-### Prerequisites
+### Quick Start (Docker)
+
+Pull the prebuilt image and run PWA Soundboard in minutes — no Node.js or build tools required.
+
+1. Create a `compose.yaml` file:
+
+   ```yaml
+   services:
+     pwa-soundboard:
+       image: ghcr.io/nicolasluckie/pwa-soundboard:main
+       container_name: pwa-soundboard
+       env_file: .env
+       restart: unless-stopped
+
+       # Configure via PORT in .env or use a reverse proxy and remove the exposed port
+       ports:
+         - "${PORT:-3000}:${PORT:-3000}"
+
+       # Mounts the local './data' directory to the container's '/data' directory
+       # Modify the left side of the colon ('./data') to use a different local directory
+       volumes:
+         - ./data:/data
+   ```
+
+2. Create a `.env` file:
+
+   ```env
+   HOST=0.0.0.0
+   PORT=3000
+   ORIGIN=https://soundboard.example.com
+   NODE_ENV=production
+   SOURCES=user
+   DATA_DIR=/data
+   ```
+
+   > | Variable   | Description                                               | Default                                                      |
+   > | ---------- | --------------------------------------------------------- | ------------------------------------------------------------ |
+   > | `HOST`     | Server bind address (`0.0.0.0` for all interfaces)        | `127.0.0.1`                                                  |
+   > | `PORT`     | Server listen port                                        | `3000`                                                       |
+   > | `ORIGIN`   | Public-facing origin(s) for CSRF checks (comma-separated) | Dev:<br>`http://HOST:PORT`<br>Prod:<br>`https://example.com` |
+   > | `NODE_ENV` | Deployment mode: `development` or `production`            | `development`                                                |
+   > | `SOURCES`  | Sound sources to load: `demo`, `user`, or `demo,user`     | `demo,user`                                                  |
+   > | `DATA_DIR` | Data directory path (set to `/data` in Docker)            | `../data`                                                    |
+
+3. Start the container:
+
+   ```bash
+   docker compose up -d
+   ```
+
+4. Open `http://localhost:3000` in your browser. Add sounds via the UI or drop MP3s into `./data/audio/user/`.
+
+### Development Setup
+
+#### Prerequisites
 
 - [Node.js](https://nodejs.org) >= 22
 - npm
@@ -50,7 +104,7 @@
 - [gitleaks](https://github.com/gitleaks/gitleaks) — for pre-commit secret scanning (`brew install gitleaks` on macOS)
 - [git-cliff](https://github.com/orhun/git-cliff) — for CHANGELOG generation during releases (optional, only needed by release maintainers)
 
-### Installation
+#### Installation
 
 1. Clone the repo:
 
@@ -179,7 +233,7 @@ pwa-soundboard/
 │   │       ├── demos/     # Committed demo sound icons (repo)
 │   │       └── user/      # Your personal sound icons (gitignored)
 │   ├── demos.json         # Demo sound metadata (committed)
-│   └── user-samples.json  # User sound metadata (gitignored)
+│   └── user_data.json  # User sound metadata (gitignored)
 ├── docker/                # Docker build + compose overrides
 │   ├── Dockerfile         # Multi-stage Docker build
 │   ├── compose.dev.yaml   # Dev override (build from source)
@@ -199,7 +253,7 @@ pwa-soundboard/
 Sounds are split into two sources, controlled by the `SOURCES` env var:
 
 - **`data/audio/demos/`** — Committed demo sounds (included with the repo). Metadata in `data/demos.json`.
-- **`data/audio/user/`** — Your personal sounds (gitignored). Metadata in `data/user-samples.json`.
+- **`data/audio/user/`** — Your personal sounds (gitignored). Metadata in `data/user_data.json`.
 
 The server merges both sources on the fly when `/api/samples` is called — no cache file to maintain.
 
@@ -207,18 +261,18 @@ The server merges both sources on the fly when `/api/samples` is called — no c
 
 The `SOURCES` env var controls which sources are loaded:
 
-| Value        | Behavior              |
-| ------------ | --------------------- |
-| `demos,user` | Load both (default)   |
-| `demos`      | Only repo demo sounds |
-| `user`       | Only personal sounds  |
+| Value       | Behavior              |
+| ----------- | --------------------- |
+| `demo,user` | Load both (default)   |
+| `demo`      | Only repo demo sounds |
+| `user`      | Only personal sounds  |
 
 Switching is instant — just restart the server with a different `SOURCES` value.
 
 ### Adding Sounds
 
-1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/user/`, and updates `data/user-samples.json` automatically. (Requires `user` in `SOURCES`.)
-2. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user-samples.json` with `id`, `name`, `file`, and `color`.
+1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/user/`, and updates `data/user_data.json` automatically. (Requires `user` in `SOURCES`.)
+2. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user_data.json` with `id`, `name`, `file`, and `color`.
 
 Demo sounds work out of the box — no setup required.
 
@@ -253,7 +307,7 @@ Set `NODE_ENV=production` in your `.env` to use the production override. The ser
 | `PORT`     | `3000`             | Server listen port                                        |
 | `ORIGIN`   | `http://HOST:PORT` | Public-facing origin(s) for CSRF checks (comma-separated) |
 | `NODE_ENV` | `development`      | Deployment mode: `development` or `production`            |
-| `SOURCES`  | `demos,user`       | Sound sources to load: `demos`, `user`, or `demos,user`   |
+| `SOURCES`  | `demo,user`        | Sound sources to load: `demo`, `user`, or `demo,user`     |
 | `DATA_DIR` | `../data`          | Data directory path (set to `/data` in Docker)            |
 
 ### CI/CD

@@ -28,7 +28,7 @@ const dataPath = process.env.DATA_DIR
 const distPath = path.resolve(__dirname, '../client/dist');
 const samplesPath = path.join(dataPath, 'audio');
 const SOURCES = new Set(
-  (process.env.SOURCES || 'demos,user')
+  (process.env.SOURCES || 'demo,user')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
@@ -36,7 +36,7 @@ const SOURCES = new Set(
 const demosPath = path.join(dataPath, 'audio', 'demos');
 const userPath = path.join(dataPath, 'audio', 'user');
 const demosJsonPath = path.join(dataPath, 'demos.json');
-const userSamplesJsonPath = path.join(dataPath, 'user-samples.json');
+const userSamplesJsonPath = path.join(dataPath, 'user_data.json');
 
 const jsonMutex = { locked: false, queue: [] };
 function acquireMutex(mutex) {
@@ -89,7 +89,7 @@ function makeSlug(name) {
 async function getSamples() {
   const samples = [];
 
-  if (SOURCES.has('demos')) {
+  if (SOURCES.has('demo')) {
     try {
       const demosRaw = await readFile(demosJsonPath, 'utf-8');
       const demos = JSON.parse(demosRaw);
@@ -105,7 +105,7 @@ async function getSamples() {
       const userSamples = JSON.parse(userRaw);
       samples.push(...userSamples.map(d => ({ ...d, file: `user/${d.file}` })));
     } catch {
-      // user-samples.json doesn't exist, that's fine
+      // user_data.json doesn't exist, that's fine
     }
   }
 
@@ -247,7 +247,7 @@ app.post('/api/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'i
       entry.icon = `/icons/user/${iconFileName}`;
     }
 
-    // Update user-samples.json (without the user/ prefix)
+    // Update user_data.json (without the user/ prefix)
     const userEntry = { ...entry, file: `${slug}.mp3` };
     await acquireMutex(jsonMutex);
     try {
@@ -256,7 +256,7 @@ app.post('/api/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'i
         const userRaw = await readFile(userSamplesJsonPath, 'utf-8');
         userSamples = JSON.parse(userRaw);
       } catch {
-        // user-samples.json doesn't exist yet
+        // user_data.json doesn't exist yet
       }
       if (userSamples.find((s) => s.id === slug)) {
         userSamples = userSamples.map((s) => (s.id === slug ? userEntry : s));

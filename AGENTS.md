@@ -41,15 +41,15 @@ This is required for automated CHANGELOG generation via git-cliff.
 
 ## Scopes (optional but encouraged)
 
-| Scope    | Covers                                                      |
-| -------- | ----------------------------------------------------------- |
-| `ui`     | React components, layout, styling                           |
-| `audio`  | Sample files, demos.json, user-samples.json, playback logic |
-| `pwa`    | Service worker, manifest, offline caching                   |
-| `server` | Express server, static serving                              |
-| `config` | Vite config, environment                                    |
-| `ci`     | GitHub Actions workflows                                    |
-| `deps`   | Dependency updates                                          |
+| Scope    | Covers                                                   |
+| -------- | -------------------------------------------------------- |
+| `ui`     | React components, layout, styling                        |
+| `audio`  | Sample files, demos.json, user_data.json, playback logic |
+| `pwa`    | Service worker, manifest, offline caching                |
+| `server` | Express server, static serving                           |
+| `config` | Vite config, environment                                 |
+| `ci`     | GitHub Actions workflows                                 |
+| `deps`   | Dependency updates                                       |
 
 ---
 
