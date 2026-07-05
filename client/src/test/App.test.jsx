@@ -122,4 +122,69 @@ describe('App', () => {
     const stopButton = screen.getByLabelText('Stop all sounds');
     expect(stopButton.disabled).toBe(true);
   });
+
+  it('renders refresh cache button', () => {
+    render(<App />);
+    expect(screen.getByLabelText('Refresh app cache')).toBeDefined();
+  });
+
+  it('opens refresh dialog when refresh button clicked', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Refresh app cache'));
+    expect(
+      screen.getByText('This will clear the cached app data and reload. Continue?')
+    ).toBeDefined();
+    expect(screen.getByText('Cancel')).toBeDefined();
+    expect(screen.getByText('Refresh')).toBeDefined();
+  });
+
+  it('closes refresh dialog when cancel clicked', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Refresh app cache'));
+    expect(screen.getByText('Cancel')).toBeDefined();
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(
+      screen.queryByText('This will clear the cached app data and reload. Continue?')
+    ).toBeNull();
+  });
+
+  it('closes refresh dialog when overlay clicked', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Refresh app cache'));
+    const overlay = document.querySelector('.dialog-overlay');
+    fireEvent.click(overlay);
+    expect(
+      screen.queryByText('This will clear the cached app data and reload. Continue?')
+    ).toBeNull();
+  });
+
+  it('unregisters service workers, clears caches, and reloads on confirm', async () => {
+    const unregisterMock = vi.fn(() => Promise.resolve());
+    const getRegistrationsMock = vi.fn(() => Promise.resolve([{ unregister: unregisterMock }]));
+    const deleteCacheMock = vi.fn(() => Promise.resolve(true));
+    const cacheKeysMock = vi.fn(() => Promise.resolve(['cache-1', 'cache-2']));
+    const reloadMock = vi.fn();
+
+    navigator.serviceWorker = { getRegistrations: getRegistrationsMock };
+    global.caches = { keys: cacheKeysMock, delete: deleteCacheMock };
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, reload: reloadMock },
+      writable: true,
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Refresh app cache'));
+    fireEvent.click(screen.getByText('Refresh'));
+
+    await waitFor(() => {
+      expect(getRegistrationsMock).toHaveBeenCalled();
+      expect(unregisterMock).toHaveBeenCalled();
+      expect(cacheKeysMock).toHaveBeenCalled();
+      expect(deleteCacheMock).toHaveBeenCalledTimes(2);
+      expect(reloadMock).toHaveBeenCalled();
+    });
+
+    delete navigator.serviceWorker;
+    delete global.caches;
+  });
 });

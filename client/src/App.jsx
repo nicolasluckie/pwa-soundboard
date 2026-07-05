@@ -5,13 +5,14 @@ import SearchBar from './components/SearchBar.jsx';
 import InstallPrompt from './components/InstallPrompt.jsx';
 import PreloadModal from './components/PreloadModal.jsx';
 import UploadModal from './components/UploadModal.jsx';
-import { Square, Plus } from 'lucide-react';
+import { Square, Plus, RefreshCw } from 'lucide-react';
 
 function App() {
   const [query, setQuery] = useState('');
   const [samples, setSamples] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [refreshOpen, setRefreshOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/samples')
@@ -46,6 +47,14 @@ function App() {
         <header className="top-bar">
           <div className="top-bar-row title-row">
             <h1 className="title">Soundboard</h1>
+            <button
+              className="refresh-button"
+              onClick={() => setRefreshOpen(true)}
+              aria-label="Refresh app cache"
+              title="Refresh app cache"
+            >
+              <RefreshCw size={16} />
+            </button>
             <button
               className="upload-button"
               onClick={() => setUploadOpen(true)}
@@ -103,6 +112,42 @@ function App() {
         </footer>
       </div>
       <PreloadModal visible={preloading} count={preloadCount} total={preloadTotal} />
+      {refreshOpen && (
+        <div
+          className="dialog-overlay"
+          onClick={() => setRefreshOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm cache refresh"
+        >
+          <div className="dialog-content refresh-dialog" onClick={(e) => e.stopPropagation()}>
+            <p className="refresh-text">
+              This will clear the cached app data and reload. Continue?
+            </p>
+            <div className="refresh-actions">
+              <button className="refresh-cancel" onClick={() => setRefreshOpen(false)}>
+                Cancel
+              </button>
+              <button
+                className="refresh-confirm"
+                onClick={async () => {
+                  if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map((r) => r.unregister()));
+                  }
+                  if ('caches' in window) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map((k) => caches.delete(k)));
+                  }
+                  window.location.reload();
+                }}
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <UploadModal
         open={uploadOpen}
         onOpenChange={setUploadOpen}
