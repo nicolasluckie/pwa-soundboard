@@ -83,6 +83,14 @@ body {
   font-weight: 500;
 }
 
+.title-row .refresh-button {
+  position: absolute;
+  left: 0;
+  padding: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
 .title-block {
   display: flex;
   flex-direction: column;
@@ -411,6 +419,75 @@ body {
 
 .upload-button:hover {
   background: var(--surface-hover);
+}
+
+/* Refresh button */
+.refresh-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.refresh-button:hover {
+  background: var(--surface-hover);
+}
+
+/* Refresh dialog */
+.refresh-dialog {
+  text-align: center;
+}
+
+.refresh-text {
+  margin: 0 0 20px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.refresh-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.refresh-cancel,
+.refresh-confirm {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: background 0.15s ease;
+}
+
+.refresh-cancel {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.refresh-cancel:hover {
+  background: var(--surface-hover);
+}
+
+.refresh-confirm {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.refresh-confirm:hover {
+  filter: brightness(1.1);
 }
 
 /* Upload dialog */
