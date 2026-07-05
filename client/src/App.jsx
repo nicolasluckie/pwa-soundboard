@@ -46,33 +46,32 @@ function App() {
         <header className="top-bar">
           <div className="top-bar-row title-row">
             <h1 className="title">Soundboard</h1>
-            <InstallPrompt />
-          </div>
-          <div className="top-bar-row">
-            <SearchBar value={query} onChange={setQuery} />
-          </div>
-          <div className="top-bar-row">
-            <button
-              className="stop-button"
-              onClick={stopAll}
-              disabled={active === 0}
-              aria-label="Stop all sounds"
-              title="Stop all sounds"
-            >
-              <Square size={18} />
-              <span>Stop all sounds</span>
-            </button>
             <button
               className="upload-button"
               onClick={() => setUploadOpen(true)}
               aria-label="Add new sound"
               title="Add new sound"
             >
-              <Plus size={18} />
-              <span>Add Sound</span>
+              <Plus size={16} />
             </button>
+            <InstallPrompt />
+          </div>
+          <div className="top-bar-row">
+            <SearchBar value={query} onChange={setQuery} />
           </div>
         </header>
+        <div className="stop-row">
+          <button
+            className="stop-button"
+            onClick={stopAll}
+            disabled={active === 0}
+            aria-label="Stop all sounds"
+            title="Stop all sounds"
+          >
+            <Square size={18} />
+            <span>Stop all sounds</span>
+          </button>
+        </div>
 
         <main className="grid">
           {loading ? (

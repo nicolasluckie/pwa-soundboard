@@ -42,8 +42,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  position: sticky;
-  top: 0;
   background: var(--bg);
   z-index: 10;
   padding-bottom: 8px;
@@ -56,6 +54,17 @@ body {
   flex-wrap: wrap;
 }
 
+.stop-row {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg);
+  z-index: 10;
+  padding: 6px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 .title-row {
   justify-content: center;
   position: relative;
@@ -64,6 +73,14 @@ body {
 .title-row .install-button {
   position: absolute;
   right: 0;
+}
+
+.title-row .upload-button {
+  position: absolute;
+  right: 0;
+  padding: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
 .title-block {
@@ -494,15 +511,47 @@ body {
 .form-row {
   display: flex;
   gap: 12px;
+  align-items: center;
+  justify-content: center;
 }
 
 .form-row .form-label {
-  flex: 1;
+  flex: 0 0 auto;
+  min-width: 0;
+  text-align: center;
+}
+
+.form-row .form-label input {
+  margin: 0 auto;
+}
+
+.form-row .form-label:first-child {
+  width: 100px;
+  margin-left: 2px;
+}
+
+.form-row .form-label:last-child {
+  margin-left: 8px;
+}
+
+.form-or {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+}
+
+.form-or span {
+  font-weight: bold;
+  font-style: italic;
+  color: var(--text-muted);
 }
 
 .emoji-input {
   text-align: center;
   font-size: 1.25rem !important;
+  width: 80px;
 }
 
 .color-picker {
@@ -543,6 +592,8 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 60px;
+  min-width: 0;
+  width: 120px;
 }
 
 .icon-upload:hover {

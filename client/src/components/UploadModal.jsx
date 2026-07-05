@@ -213,62 +213,65 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
                 />
               </label>
 
-              <label className="form-label">
-                <span>Color</span>
-                <div className="color-picker">
-                  {COLORS.map((c) => (
-                    <button
-                      key={c.value}
-                      type="button"
-                      className={`color-swatch ${color === c.value ? 'selected' : ''}`}
-                      style={{ background: c.value }}
-                      onClick={() => setColor(c.value)}
-                      aria-label={c.name}
-                    />
-                  ))}
-                </div>
-              </label>
-            </div>
+              <div className="form-or">
+                <span>OR</span>
+              </div>
 
-            <div className="form-label">
-              <span>Icon (optional)</span>
-              <div
-                className={`icon-upload ${iconPreview ? 'has-icon' : ''}`}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleIconDrop}
-                onClick={() => iconInputRef.current?.click()}
-              >
-                <input
-                  ref={iconInputRef}
-                  type="file"
-                  accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp"
-                  onChange={(e) => handleIconSelect(e.target.files[0])}
-                  style={{ display: 'none' }}
-                />
-                {iconPreview ? (
-                  <div className="icon-upload-preview">
-                    <img src={iconPreview} alt="Icon preview" />
-                    <button
-                      type="button"
-                      className="icon-upload-remove"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIconFile(null);
-                        setIconPreview('');
-                      }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="icon-upload-placeholder">
-                    <ImageIcon size={20} />
-                    <span>Click or drop an image</span>
-                    <span className="icon-upload-hint">PNG, JPG, GIF, WebP</span>
-                  </div>
-                )}
+              <div className="form-label">
+                <span>Icon (optional)</span>
+                <div
+                  className={`icon-upload ${iconPreview ? 'has-icon' : ''}`}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleIconDrop}
+                  onClick={() => iconInputRef.current?.click()}
+                >
+                  <input
+                    ref={iconInputRef}
+                    type="file"
+                    accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp"
+                    onChange={(e) => handleIconSelect(e.target.files[0])}
+                    style={{ display: 'none' }}
+                  />
+                  {iconPreview ? (
+                    <div className="icon-upload-preview">
+                      <img src={iconPreview} alt="Icon preview" />
+                      <button
+                        type="button"
+                        className="icon-upload-remove"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIconFile(null);
+                          setIconPreview('');
+                        }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="icon-upload-placeholder">
+                      <ImageIcon size={20} />
+                      <span>Click or drop</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+
+            <label className="form-label">
+              <span>Color</span>
+              <div className="color-picker">
+                {COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    className={`color-swatch ${color === c.value ? 'selected' : ''}`}
+                    style={{ background: c.value }}
+                    onClick={() => setColor(c.value)}
+                    aria-label={c.name}
+                  />
+                ))}
+              </div>
+            </label>
 
             <label className="form-label">
               <span>Tags (comma-separated)</span>
