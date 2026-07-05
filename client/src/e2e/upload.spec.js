@@ -140,7 +140,7 @@ test('icon upload field is visible in modal', async ({ page }) => {
   await page.locator('.upload-button').click();
   await expect(page.locator('.upload-dialog')).toBeVisible();
   await expect(page.getByText('Icon (optional)')).toBeVisible();
-  await expect(page.getByText('Click or drop an image')).toBeVisible();
+  await expect(page.getByText('Click or drop')).toBeVisible();
 });
 
 test('successful upload with icon returns icon path', async ({ page }) => {

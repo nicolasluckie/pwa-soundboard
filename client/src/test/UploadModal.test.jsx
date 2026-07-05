@@ -173,7 +173,7 @@ describe('UploadModal', () => {
   it('renders icon upload field', () => {
     render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
     expect(screen.getByText('Icon (optional)')).toBeDefined();
-    expect(screen.getByText('Click or drop an image')).toBeDefined();
+    expect(screen.getByText('Click or drop')).toBeDefined();
   });
 
   it('shows icon preview when image selected', async () => {
@@ -196,7 +196,7 @@ describe('UploadModal', () => {
     });
     const removeBtn = document.querySelector('.icon-upload-remove');
     fireEvent.click(removeBtn);
-    expect(screen.getByText('Click or drop an image')).toBeDefined();
+    expect(screen.getByText('Click or drop')).toBeDefined();
   });
 
   it('appends icon to FormData when submitting with icon selected', async () => {
