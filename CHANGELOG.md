@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-07-05
+
+### Added
+
+- Move add sound button to title row and make stop button sticky ([`b19b2b4`](https://github.com/nicolasluckie/pwa-soundboard/commit/b19b2b4fc72bd4dbb6d95806444cf13664fd5607))
+
+### Fixed
+
+- Standardize source key to "demo" and rename user data file ([`767ac8b`](https://github.com/nicolasluckie/pwa-soundboard/commit/767ac8bd163df18e91c923f2d1d433218047973c))
+
 ## [1.0.3] - 2026-07-04
 
 ### Fixed
