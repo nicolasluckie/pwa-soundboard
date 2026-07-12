@@ -246,23 +246,15 @@ pwa-soundboard/
 │       ├── hooks/         # Custom React hooks (useAudio)
 │       └── test/          # Vitest unit tests
 ├── data/                  # Sound data (partially gitignored)
-│   ├── audio/
-│   │   ├── demos/         # Committed demo sounds (repo)
-│   │   ├── user/          # Your personal sounds (gitignored)
-│   │   └── icons/
-│   │       ├── demos/     # Committed demo sound icons (repo)
-│   │       └── user/      # Your personal sound icons (gitignored)
-│   ├── demos.json         # Demo sound metadata (committed)
-│   └── user_data.json  # User sound metadata (gitignored)
-├── docker/                # Docker build + compose overrides
-│   ├── Dockerfile         # Multi-stage Docker build
-│   ├── compose.dev.yaml   # Dev override (build from source)
-│   └── compose.prod.yaml  # Prod override (pull prebuilt image)
+│   ├── audio/             # All audio files, flat (committed demos + gitignored user sounds)
+│   └── icons/             # All icon files, flat (committed demos + gitignored user icons)
+├── Dockerfile             # Multi-stage Docker build
 ├── server/                # Node.js + Express static server
 ├── scripts/               # Utility scripts (version-bump)
 ├── commitlint.config.cjs  # Conventional Commits rules
 ├── cliff.toml             # git-cliff CHANGELOG config
-├── compose.yaml           # Base Docker Compose config
+├── compose.yaml           # Docker Compose (prod image by default)
+├── compose.override.yaml  # Dev override — auto-merged for local builds
 └── README.md
 ```
 
@@ -274,11 +266,11 @@ See the [README](./README.md) for more detail on each directory.
 
 There are two ways to add sounds to the soundboard:
 
-1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/user/`, and updates `data/user_data.json` automatically. (Requires `user` in the `SOURCES` env var.)
+1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/`, stores the icon in `data/icons/`, and upserts the metadata into MongoDB. (Requires `user` in the `SOURCES` env var.)
 
-2. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user_data.json` with `id`, `name`, `file`, and `color`.
+2. **Via migration script** — run `npm run migrate` to manually import existing `demos.json`/`user_data.json` entries into MongoDB. On a fresh Docker install, demo sounds are seeded automatically on first boot.
 
-Demo sounds in `data/audio/demos/` are committed to the repo and work out of the box. See the [README](./README#audio-files) for full details on the `SOURCES` env var.
+Demo sounds in `data/audio/` are committed to the repo and work out of the box after running the migration script. See the [README](./README.md#audio-files) for full details on the `SOURCES` env var.
 
 ---
 
@@ -324,17 +316,18 @@ Tags must be prefixed with `v` (e.g. `v1.0.0`) for git-cliff to pick them up.
 
 The project uses a multi-stage Docker build (Node build stage → nginx-free Express runtime stage).
 
+`compose.yaml` uses the prebuilt GHCR image. `compose.override.yaml` at the repo root is auto-merged by Docker Compose for local development.
+
 ### Development (build from source)
 
 ```bash
-docker compose -f compose.yaml -f docker/compose.dev.yaml build
-docker compose -f compose.yaml -f docker/compose.dev.yaml up -d
+docker compose up -d
 ```
 
 ### Production (pull prebuilt image from GHCR)
 
 ```bash
-docker compose -f compose.yaml -f docker/compose.prod.yaml up -d
+docker compose -f compose.yaml up -d
 ```
 
 Docker images are published to `ghcr.io/nicolasluckie/pwa-soundboard`. See the [README](./README#deployment) for all configuration options.

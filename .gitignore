@@ -18,13 +18,10 @@ venv/
 .env.*
 !.env.*.example
 
-# User data (audio archive + samples metadata — not committed)
-/data/*
-server/data/
-!/data/demos.json
-!/data/audio/
+# Sound data — commit demo audio/icons, ignore user uploads
 /data/audio/*
-!/data/audio/demos/
-!/data/audio/icons/
-/data/audio/icons/*
-!/data/audio/icons/demos/
+!/data/audio/bruh-sound-effect.mp3
+!/data/audio/oof.mp3
+/data/icons/*
+!/data/icons/bruh_icon.webp
+!/data/icons/oof.webp

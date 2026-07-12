@@ -2,9 +2,11 @@ import express from 'express';
 import multer from 'multer';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { readFile, writeFile, mkdir, unlink, rename, access } from 'fs/promises';
+import { writeFile, mkdir, unlink, access, readFile } from 'fs/promises';
+import { createHash } from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { connectDB, soundsCol, assetsCol } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,34 +28,14 @@ const dataPath = process.env.DATA_DIR
   ? path.resolve(process.env.DATA_DIR)
   : path.resolve(__dirname, '../data');
 const distPath = path.resolve(__dirname, '../client/dist');
-const samplesPath = path.join(dataPath, 'audio');
+const audioPath = path.join(dataPath, 'audio');
+const iconsPath = path.join(dataPath, 'icons');
 const SOURCES = new Set(
   (process.env.SOURCES || 'demo,user')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
 );
-const demosPath = path.join(dataPath, 'audio', 'demos');
-const userPath = path.join(dataPath, 'audio', 'user');
-const demosJsonPath = path.join(dataPath, 'demos.json');
-const userSamplesJsonPath = path.join(dataPath, 'user_data.json');
-
-const jsonMutex = { locked: false, queue: [] };
-function acquireMutex(mutex) {
-  if (!mutex.locked) {
-    mutex.locked = true;
-    return Promise.resolve();
-  }
-  return new Promise((resolve) => mutex.queue.push(resolve));
-}
-function releaseMutex(mutex) {
-  const next = mutex.queue.shift();
-  if (next) {
-    next();
-  } else {
-    mutex.locked = false;
-  }
-}
 
 const app = express();
 
@@ -75,47 +57,31 @@ app.use(express.json());
 
 // --- helpers ---
 
-function makeSlug(name) {
-  const slug = name
+function baseSlug(name) {
+  return name
     .toLowerCase()
     .replace(/[^a-z0-9 -]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
-  if (slug.includes('..') || slug.includes('/')) return '';
-  return slug;
 }
 
-async function getSamples() {
-  const samples = [];
-
-  if (SOURCES.has('demo')) {
-    try {
-      const demosRaw = await readFile(demosJsonPath, 'utf-8');
-      const demos = JSON.parse(demosRaw);
-      samples.push(...demos.map(d => ({ ...d, file: `demos/${d.file}` })));
-    } catch (err) {
-      console.warn('No demos.json found, skipping repo demos');
-    }
+async function generateUniqueSlug(name, excludeSlug = null) {
+  const base = baseSlug(name);
+  if (!base || base.includes('..') || base.includes('/')) return '';
+  let slug = base;
+  let counter = 1;
+  while (true) {
+    const existing = await soundsCol().findOne({ slug });
+    if (!existing || existing.slug === excludeSlug) return slug;
+    slug = `${base}-${counter}`;
+    counter++;
   }
-
-  if (SOURCES.has('user')) {
-    try {
-      const userRaw = await readFile(userSamplesJsonPath, 'utf-8');
-      const userSamples = JSON.parse(userRaw);
-      samples.push(...userSamples.map(d => ({ ...d, file: `user/${d.file}` })));
-    } catch {
-      // user_data.json doesn't exist, that's fine
-    }
-  }
-
-  return samples;
 }
 
 // --- static serving ---
 
-const iconsPath = path.join(dataPath, 'audio', 'icons');
-app.use('/samples', express.static(samplesPath));
+app.use('/audio', express.static(audioPath));
 app.use('/icons', express.static(iconsPath));
 app.use(express.static(distPath));
 
@@ -123,7 +89,40 @@ app.use(express.static(distPath));
 
 app.get('/api/samples', async (_req, res) => {
   try {
-    const samples = await getSamples();
+    const sourceFilter = [...SOURCES];
+    const pipeline = [
+      { $match: { source: { $in: sourceFilter } } },
+      {
+        $lookup: {
+          from: 'assets',
+          localField: 'asset_id',
+          foreignField: '_id',
+          as: 'asset',
+        },
+      },
+      { $unwind: '$asset' },
+      {
+        $project: {
+          _id: 0,
+          id: '$slug',
+          name: 1,
+          file: { $concat: ['$slug', '.mp3'] },
+          color: 1,
+          tags: 1,
+          emoji: {
+            $cond: [{ $eq: ['$asset.type', 'emoji'] }, '$asset.value', '$$REMOVE'],
+          },
+          icon: {
+            $cond: [
+              { $eq: ['$asset.type', 'custom'] },
+              { $concat: ['/icons/', '$asset.value'] },
+              '$$REMOVE',
+            ],
+          },
+        },
+      },
+    ];
+    const samples = await soundsCol().aggregate(pipeline).toArray();
     res.json(samples);
   } catch (err) {
     console.error('Failed to load samples:', err);
@@ -179,7 +178,8 @@ app.post('/api/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'i
       return res.status(400).json({ error: 'Name is required' });
     }
 
-    const slug = makeSlug(req.body.slug || name);
+    const requestedSlug = req.body.slug ? baseSlug(req.body.slug) : null;
+    const slug = requestedSlug || await generateUniqueSlug(name);
     if (!slug) {
       return res.status(400).json({ error: 'Invalid slug' });
     }
@@ -192,17 +192,13 @@ app.post('/api/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'i
       .map((t) => t.trim())
       .filter(Boolean);
 
-    // Write uploaded file to temp path for ffmpeg
-    const tmpInput = path.join(userPath, `${slug}.tmp`);
-    const outputPath = path.join(userPath, `${slug}.mp3`);
+    await mkdir(audioPath, { recursive: true });
 
-    await mkdir(userPath, { recursive: true });
+    const tmpInput = path.join(audioPath, `${slug}.tmp`);
+    const outputPath = path.join(audioPath, `${slug}.mp3`);
 
-    // Write the uploaded buffer to a temp file
-    const { buffer } = audioFile;
-    await writeFile(tmpInput, buffer);
+    await writeFile(tmpInput, audioFile.buffer);
 
-    // Normalize with ffmpeg
     try {
       await execFileAsync('ffmpeg', [
         '-y', '-i', tmpInput,
@@ -211,7 +207,7 @@ app.post('/api/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'i
         outputPath,
       ]);
     } finally {
-      try { await unlink(tmpInput); } catch (e) { console.warn('Failed to clean up temp file:', e.message); }
+      await unlink(tmpInput).catch((e) => console.warn('Failed to clean up temp file:', e.message));
     }
 
     try {
@@ -220,55 +216,59 @@ app.post('/api/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'i
       return res.status(500).json({ error: 'ffmpeg conversion failed' });
     }
 
-    // Build the sample entry
-    const entry = {
-      id: slug,
-      name,
-      file: `user/${slug}.mp3`,
-      color,
-      emoji,
-      tags,
-    };
-
-    // Save icon image if provided (convert to WebP for optimization)
+    // Determine asset: custom icon or emoji
     const iconFile = req.files?.icon?.[0];
+    let assetId;
+    let iconPath = null;
+
     if (iconFile) {
-      const userIconsPath = path.join(iconsPath, 'user');
-      await mkdir(userIconsPath, { recursive: true });
-      const tmpIconInput = path.join(userIconsPath, `${slug}.tmp`);
+      await mkdir(iconsPath, { recursive: true });
       const iconFileName = `${slug}.webp`;
-      const iconOutputPath = path.join(userIconsPath, iconFileName);
+      const iconOutputPath = path.join(iconsPath, iconFileName);
+      const tmpIconInput = path.join(iconsPath, `${slug}.tmp`);
       await writeFile(tmpIconInput, iconFile.buffer);
       try {
         await execFileAsync('ffmpeg', ['-y', '-i', tmpIconInput, '-vf', 'scale=\'min(256,iw)\':-1', iconOutputPath]);
       } finally {
         await unlink(tmpIconInput).catch(() => {});
       }
-      entry.icon = `/icons/user/${iconFileName}`;
+      const iconBytes = await readFile(iconOutputPath);
+      const fileHash = createHash('sha256').update(iconBytes).digest('hex');
+
+      const existing = await assetsCol().findOne({ file_hash: fileHash });
+      if (existing) {
+        assetId = existing._id;
+        iconPath = `/icons/${existing.value}`;
+      } else {
+        const assetDoc = { type: 'custom', value: iconFileName, file_hash: fileHash };
+        const { insertedId } = await assetsCol().insertOne(assetDoc);
+        assetId = insertedId;
+        iconPath = `/icons/${iconFileName}`;
+      }
+    } else {
+      const existing = await assetsCol().findOne({ type: 'emoji', value: emoji });
+      if (existing) {
+        assetId = existing._id;
+      } else {
+        const { insertedId } = await assetsCol().insertOne({ type: 'emoji', value: emoji });
+        assetId = insertedId;
+      }
     }
 
-    // Update user_data.json (without the user/ prefix)
-    const userEntry = { ...entry, file: `${slug}.mp3` };
-    await acquireMutex(jsonMutex);
-    try {
-      let userSamples = [];
-      try {
-        const userRaw = await readFile(userSamplesJsonPath, 'utf-8');
-        userSamples = JSON.parse(userRaw);
-      } catch {
-        // user_data.json doesn't exist yet
-      }
-      if (userSamples.find((s) => s.id === slug)) {
-        userSamples = userSamples.map((s) => (s.id === slug ? userEntry : s));
-      } else {
-        userSamples.push(userEntry);
-      }
-      const tmpJson = `${userSamplesJsonPath}.tmp`;
-      await writeFile(tmpJson, JSON.stringify(userSamples, null, 2), 'utf-8');
-      await rename(tmpJson, userSamplesJsonPath);
-    } finally {
-      releaseMutex(jsonMutex);
-    }
+    await soundsCol().updateOne(
+      { slug },
+      { $set: { name, slug, source: 'user', color, tags, asset_id: assetId } },
+      { upsert: true }
+    );
+
+    const entry = {
+      id: slug,
+      name,
+      file: `${slug}.mp3`,
+      color,
+      tags,
+      ...(iconPath ? { icon: iconPath } : { emoji }),
+    };
 
     console.log(`✅ Added sample: ${name} (${slug})`);
     res.json({ success: true, sample: entry });
@@ -299,15 +299,30 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(Number(PORT), HOST, async () => {
-  if (SOURCES.has('user')) {
-    await mkdir(userPath, { recursive: true });
-    try {
-      await access(userSamplesJsonPath);
-    } catch {
-      await writeFile(userSamplesJsonPath, '[]', 'utf-8');
-    }
+async function autoSeedIfEmpty() {
+  const count = await soundsCol().countDocuments();
+  if (count > 0) return;
+  console.log('🌱 Empty database detected — seeding demo sounds...');
+  try {
+    const { run } = await import('./migrate-to-mongo.js');
+    await run();
+  } catch (err) {
+    console.warn('⚠️  Auto-seed failed (non-fatal):', err.message);
   }
-  console.log(`PWA Soundboard running at http://${HOST}:${PORT}`);
-  console.log(`Sources: ${[...SOURCES].join(', ')}`);
+}
+
+async function start() {
+  await connectDB();
+  await mkdir(audioPath, { recursive: true });
+  await mkdir(iconsPath, { recursive: true });
+  await autoSeedIfEmpty();
+  app.listen(Number(PORT), HOST, () => {
+    console.log(`PWA Soundboard running at http://${HOST}:${PORT}`);
+    console.log(`Sources: ${[...SOURCES].join(', ')}`);
+  });
+}
+
+start().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });

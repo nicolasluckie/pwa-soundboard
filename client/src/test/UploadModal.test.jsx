@@ -326,10 +326,10 @@ describe('UploadModal', () => {
     const mockSample = {
       id: 'existing-slug',
       name: 'Updated',
-      file: 'user/existing-slug.mp3',
+      file: 'existing-slug.mp3',
       color: '#00d4ff',
       emoji: '🔊',
-      icon: '/icons/user/existing-slug.webp',
+      icon: '/icons/existing-slug.webp',
       tags: ['meme'],
     };
     global.fetch.mockResolvedValue({

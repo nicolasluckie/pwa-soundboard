@@ -2,7 +2,7 @@
 
 <h1 align="center">PWA Soundboard</h1>
 
-<p align="center">React + Vite PWA soundboard — dark launchpad grid, instant search, overlapping playback, and offline audio caching. Drop in your own MP3s, update a JSON file, and launch via a tiny Express server. Installable on mobile and desktop.</p>
+<p align="center">React + Vite PWA soundboard — dark launchpad grid, instant search, overlapping playback, and offline audio caching. Upload sounds via the UI, store metadata in MongoDB, and serve via a tiny Express server. Installable on mobile and desktop.</p>
 
 <div align="center">
 
@@ -75,16 +75,18 @@ Pull the prebuilt image and run PWA Soundboard in minutes — no Node.js or buil
    NODE_ENV=production
    SOURCES=user
    DATA_DIR=/data
+   MONGODB_URI=mongodb://mongo:27017/soundboard
    ```
 
-   > | Variable   | Description                                               | Default                                                      |
-   > | ---------- | --------------------------------------------------------- | ------------------------------------------------------------ |
-   > | `HOST`     | Server bind address (`0.0.0.0` for all interfaces)        | `127.0.0.1`                                                  |
-   > | `PORT`     | Server listen port                                        | `3000`                                                       |
-   > | `ORIGIN`   | Public-facing origin(s) for CSRF checks (comma-separated) | Dev:<br>`http://HOST:PORT`<br>Prod:<br>`https://example.com` |
-   > | `NODE_ENV` | Deployment mode: `development` or `production`            | `development`                                                |
-   > | `SOURCES`  | Sound sources to load: `demo`, `user`, or `demo,user`     | `demo,user`                                                  |
-   > | `DATA_DIR` | Data directory path (set to `/data` in Docker)            | `../data`                                                    |
+   > | Variable      | Description                                               | Default                                                      |
+   > | ------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
+   > | `HOST`        | Server bind address (`0.0.0.0` for all interfaces)        | `127.0.0.1`                                                  |
+   > | `PORT`        | Server listen port                                        | `3000`                                                       |
+   > | `ORIGIN`      | Public-facing origin(s) for CSRF checks (comma-separated) | Dev:<br>`http://HOST:PORT`<br>Prod:<br>`https://example.com` |
+   > | `NODE_ENV`    | Deployment mode: `development` or `production`            | `development`                                                |
+   > | `SOURCES`     | Sound sources to load: `demo`, `user`, or `demo,user`     | `demo,user`                                                  |
+   > | `DATA_DIR`    | Data directory path (set to `/data` in Docker)            | `../data`                                                    |
+   > | `MONGODB_URI` | MongoDB connection URI                                    | `mongodb://localhost:27017/soundboard`                       |
 
 3. Start the container:
 
@@ -92,7 +94,9 @@ Pull the prebuilt image and run PWA Soundboard in minutes — no Node.js or buil
    docker compose up -d
    ```
 
-4. Open `http://localhost:3000` in your browser. Add sounds via the UI or drop MP3s into `./data/audio/user/`.
+   Demo sounds are seeded automatically on first boot if the database is empty.
+
+4. Open `http://localhost:3000` in your browser. Add sounds via the UI or place MP3s in `./data/audio/`.
 
 ### Development Setup
 
@@ -121,13 +125,7 @@ Pull the prebuilt image and run PWA Soundboard in minutes — no Node.js or buil
 
    This also installs Husky git hooks automatically via the `prepare` script.
 
-3. Set up the data directory (optional — demo sounds work out of the box):
-
-   ```bash
-   mkdir -p data/audio/user
-   ```
-
-   The `data/` directory holds your personal sounds. Demo sounds in `data/audio/demos/` are committed and work immediately. Your user sounds in `data/audio/user/` are gitignored.
+3. Start a local MongoDB instance (or use Docker — see [Deployment](#deployment)).
 
 4. Install Playwright browsers (for e2e tests):
 
@@ -226,23 +224,15 @@ pwa-soundboard/
 │       ├── hooks/         # Custom React hooks (useAudio)
 │       └── test/          # Vitest unit tests
 ├── data/                  # Sound data (partially gitignored)
-│   ├── audio/
-│   │   ├── demos/         # Committed demo sounds (repo)
-│   │   ├── user/          # Your personal sounds (gitignored)
-│   │   └── icons/
-│   │       ├── demos/     # Committed demo sound icons (repo)
-│   │       └── user/      # Your personal sound icons (gitignored)
-│   ├── demos.json         # Demo sound metadata (committed)
-│   └── user_data.json  # User sound metadata (gitignored)
-├── docker/                # Docker build + compose overrides
-│   ├── Dockerfile         # Multi-stage Docker build
-│   ├── compose.dev.yaml   # Dev override (build from source)
-│   └── compose.prod.yaml  # Prod override (pull prebuilt image)
+│   ├── audio/             # All audio files, flat (committed demos + gitignored user sounds)
+│   └── icons/             # All icon files, flat (committed demos + gitignored user icons)
+├── Dockerfile             # Multi-stage Docker build
 ├── server/                # Node.js + Express static server
 ├── scripts/               # Utility scripts (version-bump)
 ├── commitlint.config.cjs  # Conventional Commits rules
 ├── cliff.toml             # git-cliff CHANGELOG config
-├── compose.yaml           # Base Docker Compose config
+├── compose.yaml           # Docker Compose (prod image by default)
+├── compose.override.yaml  # Dev override — auto-merged for local builds
 └── README.md
 ```
 
@@ -250,16 +240,14 @@ pwa-soundboard/
 
 ## Audio Files
 
-Sounds are split into two sources, controlled by the `SOURCES` env var:
+Sound metadata is stored in MongoDB. Audio and icon files live on the filesystem under `data/` and are served as static files.
 
-- **`data/audio/demos/`** — Committed demo sounds (included with the repo). Metadata in `data/demos.json`.
-- **`data/audio/user/`** — Your personal sounds (gitignored). Metadata in `data/user_data.json`.
-
-The server merges both sources on the fly when `/api/samples` is called — no cache file to maintain.
+- **`data/audio/`** — All MP3 files, flat. Demo sounds are committed; user-uploaded sounds are gitignored.
+- **`data/icons/`** — All icon images (WebP/PNG), flat. Demo icons are committed; user icons are gitignored.
 
 ### Sound Sources
 
-The `SOURCES` env var controls which sources are loaded:
+The `SOURCES` env var filters which sounds are returned by the API, based on the `source` field (`demo` or `user`) stored in MongoDB:
 
 | Value       | Behavior              |
 | ----------- | --------------------- |
@@ -271,10 +259,9 @@ Switching is instant — just restart the server with a different `SOURCES` valu
 
 ### Adding Sounds
 
-1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/user/`, and updates `data/user_data.json` automatically. (Requires `user` in `SOURCES`.)
-2. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user_data.json` with `id`, `name`, `file`, and `color`.
+1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/`, stores the icon in `data/icons/`, and upserts the metadata into MongoDB. (Requires `user` in `SOURCES`.)
 
-Demo sounds work out of the box — no setup required.
+Demo sounds are committed to `data/audio/` and `data/icons/` and seeded into MongoDB automatically on first boot (Docker) or via `npm run migrate` (local dev).
 
 ---
 
@@ -282,33 +269,33 @@ Demo sounds work out of the box — no setup required.
 
 ### Docker
 
-The project uses a base `compose.yaml` plus environment-specific overrides in `docker/`:
+`compose.yaml` uses the prebuilt GHCR image. A `compose.override.yaml` at the repo root is automatically merged by Docker Compose for local development (builds from source).
 
-**Development** (build from source):
-
-```bash
-docker compose -f compose.yaml -f docker/compose.dev.yaml build
-docker compose -f compose.yaml -f docker/compose.dev.yaml up -d
-```
-
-**Production** (pull prebuilt image from GHCR):
+**Development** (build from source — `compose.override.yaml` auto-merged):
 
 ```bash
-docker compose -f compose.yaml -f docker/compose.prod.yaml up -d
+docker compose up -d
 ```
 
-Set `NODE_ENV=production` in your `.env` to use the production override. The server listens on port 3000 by default. Configure via environment variables — see [`.env.dev.example`](./.env.dev.example) and [`.env.prod.example`](./.env.prod.example) for all options.
+**Production** (pull prebuilt image, skip override):
+
+```bash
+docker compose -f compose.yaml up -d
+```
+
+The server listens on port 3000 by default. Configure via environment variables — see [`.env.dev.example`](./.env.dev.example) and [`.env.prod.example`](./.env.prod.example) for all options.
 
 ### Environment Variables
 
-| Variable   | Default            | Description                                               |
-| ---------- | ------------------ | --------------------------------------------------------- |
-| `HOST`     | `127.0.0.1`        | Server bind address (`0.0.0.0` for all interfaces)        |
-| `PORT`     | `3000`             | Server listen port                                        |
-| `ORIGIN`   | `http://HOST:PORT` | Public-facing origin(s) for CSRF checks (comma-separated) |
-| `NODE_ENV` | `development`      | Deployment mode: `development` or `production`            |
-| `SOURCES`  | `demo,user`        | Sound sources to load: `demo`, `user`, or `demo,user`     |
-| `DATA_DIR` | `../data`          | Data directory path (set to `/data` in Docker)            |
+| Variable      | Default                                | Description                                               |
+| ------------- | -------------------------------------- | --------------------------------------------------------- |
+| `HOST`        | `127.0.0.1`                            | Server bind address (`0.0.0.0` for all interfaces)        |
+| `PORT`        | `3000`                                 | Server listen port                                        |
+| `ORIGIN`      | `http://HOST:PORT`                     | Public-facing origin(s) for CSRF checks (comma-separated) |
+| `NODE_ENV`    | `development`                          | Deployment mode: `development` or `production`            |
+| `SOURCES`     | `demo,user`                            | Sound sources to load: `demo`, `user`, or `demo,user`     |
+| `DATA_DIR`    | `../data`                              | Data directory path (set to `/data` in Docker)            |
+| `MONGODB_URI` | `mongodb://localhost:27017/soundboard` | MongoDB connection URI                                    |
 
 ### CI/CD
 

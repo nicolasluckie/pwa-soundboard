@@ -1,9 +1,30 @@
 services:
   pwa-soundboard:
+    image: ghcr.io/nicolasluckie/pwa-soundboard:main
     container_name: pwa-soundboard
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     volumes:
       - ./data:/data
     env_file: .env
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/soundboard
     restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  mongo:
+    image: mongo:8
+    container_name: pwa-soundboard-mongo
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongo_data:

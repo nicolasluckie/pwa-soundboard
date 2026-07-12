@@ -33,7 +33,7 @@ export function useAudio(globalVolume, filenames = []) {
       setPreloadCount(0);
       setPreloadTotal(toLoad.length);
       const pending = toLoad.map((filename) =>
-        fetch(`/samples/${filename}`)
+        fetch(`/audio/${filename}`)
           .then((r) => r.arrayBuffer())
           .then((ab) => ctx.decodeAudioData(ab))
           .then((buf) => {
@@ -71,7 +71,7 @@ export function useAudio(globalVolume, filenames = []) {
       let buffer = buffersRef.current.get(filename);
       if (!buffer) {
         try {
-          const ab = await fetch(`/samples/${filename}`).then((r) => r.arrayBuffer());
+          const ab = await fetch(`/audio/${filename}`).then((r) => r.arrayBuffer());
           buffer = await ctx.decodeAudioData(ab);
           buffersRef.current.set(filename, buffer);
         } catch {

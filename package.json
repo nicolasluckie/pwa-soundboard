@@ -15,7 +15,8 @@
     "test:unit": "npm run test:unit --prefix client",
     "test:unit:coverage": "npm run test:unit:coverage --prefix client",
     "test:e2e": "npm run test:e2e --prefix client",
-    "test": "npm run test:unit && npm run test:e2e"
+    "test": "npm run test:unit && npm run test:e2e",
+    "migrate": "npm run migrate --prefix server"
   },
   "config": {
     "commitizen": {

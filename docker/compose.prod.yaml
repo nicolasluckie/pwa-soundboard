@@ -1,3 +1,0 @@
-services:
-  pwa-soundboard:
-    image: ghcr.io/nicolasluckie/pwa-soundboard:main

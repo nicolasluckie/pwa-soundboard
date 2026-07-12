@@ -6,10 +6,12 @@
   "main": "index.js",
   "scripts": {
     "start": "node --env-file-if-exists=../.env index.js",
-    "dev": "node --env-file-if-exists=../.env index.js"
+    "dev": "node --env-file-if-exists=../.env index.js",
+    "migrate": "node --env-file-if-exists=../.env migrate-to-mongo.js"
   },
   "dependencies": {
     "express": "^4.19.2",
+    "mongodb": "^7.5.0",
     "multer": "^2.0.1"
   }
 }
