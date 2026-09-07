@@ -151,16 +151,11 @@ function App() {
       <UploadModal
         open={uploadOpen}
         onOpenChange={setUploadOpen}
-        onUploaded={(sample) =>
-          setSamples((prev) => {
-            const idx = prev.findIndex((s) => s.id === sample.id);
-            if (idx !== -1) {
-              const next = [...prev];
-              next[idx] = sample;
-              return next;
-            }
-            return [...prev, sample];
-          })
+        onUploaded={() =>
+          fetch('/api/samples')
+            .then((r) => r.json())
+            .then((data) => setSamples(data))
+            .catch(() => {})
         }
       />
     </Fragment>

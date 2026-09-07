@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
+import { Upload, X, Loader2, ImageIcon, Trash2 } from 'lucide-react';
 
 const COLORS = [
   { name: 'red', value: '#ff6b6b' },
@@ -32,8 +32,25 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
   const [error, setError] = useState('');
   const [iconFile, setIconFile] = useState(null);
   const [iconPreview, setIconPreview] = useState('');
+  const [iconMode, setIconMode] = useState('emoji'); // 'emoji' | 'upload' | 'library'
+  const [libraryIcons, setLibraryIcons] = useState([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [selectedLibraryIcon, setSelectedLibraryIcon] = useState('');
   const fileInputRef = useRef(null);
   const iconInputRef = useRef(null);
+
+  const loadLibraryIcons = useCallback(async () => {
+    setLibraryLoading(true);
+    try {
+      const res = await fetch('/api/icons');
+      const data = await res.json();
+      setLibraryIcons(Array.isArray(data) ? data : []);
+    } catch {
+      setLibraryIcons([]);
+    } finally {
+      setLibraryLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -48,8 +65,11 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
       setUploading(false);
       setIconFile(null);
       setIconPreview('');
+      setIconMode('emoji');
+      setSelectedLibraryIcon('');
+      loadLibraryIcons();
     }
-  }, [open]);
+  }, [open, loadLibraryIcons]);
 
   useEffect(() => {
     if (name && !slug) {
@@ -88,6 +108,22 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
     if (dropped) handleIconSelect(dropped);
   };
 
+  const handleDeleteLibraryIcon = async (e, filename) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/icons/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Failed to delete icon');
+        return;
+      }
+      if (selectedLibraryIcon === filename) setSelectedLibraryIcon('');
+      setLibraryIcons((prev) => prev.filter((icon) => icon.filename !== filename));
+    } catch {
+      setError('Failed to delete icon');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file) {
@@ -110,8 +146,10 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
       formData.append('emoji', emoji);
       formData.append('color', color);
       formData.append('tags', tags);
-      if (iconFile) {
+      if (iconMode === 'upload' && iconFile) {
         formData.append('icon', iconFile);
+      } else if (iconMode === 'library' && selectedLibraryIcon) {
+        formData.append('existingIcon', selectedLibraryIcon);
       }
 
       const res = await fetch('/api/upload', {
@@ -201,9 +239,33 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
               />
             </label>
 
-            <div className="form-row">
-              <label className="form-label">
-                <span>Emoji</span>
+            <div className="form-label">
+              <span>Icon</span>
+              <div className="icon-mode-tabs">
+                <button
+                  type="button"
+                  className={`icon-mode-tab ${iconMode === 'emoji' ? 'selected' : ''}`}
+                  onClick={() => setIconMode('emoji')}
+                >
+                  Emoji
+                </button>
+                <button
+                  type="button"
+                  className={`icon-mode-tab ${iconMode === 'upload' ? 'selected' : ''}`}
+                  onClick={() => setIconMode('upload')}
+                >
+                  New image
+                </button>
+                <button
+                  type="button"
+                  className={`icon-mode-tab ${iconMode === 'library' ? 'selected' : ''}`}
+                  onClick={() => setIconMode('library')}
+                >
+                  Choose existing
+                </button>
+              </div>
+
+              {iconMode === 'emoji' && (
                 <input
                   type="text"
                   value={emoji}
@@ -211,14 +273,9 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
                   maxLength={4}
                   className="emoji-input"
                 />
-              </label>
+              )}
 
-              <div className="form-or">
-                <span>OR</span>
-              </div>
-
-              <div className="form-label">
-                <span>Icon (optional)</span>
+              {iconMode === 'upload' && (
                 <div
                   className={`icon-upload ${iconPreview ? 'has-icon' : ''}`}
                   onDragOver={(e) => e.preventDefault()}
@@ -254,7 +311,43 @@ function UploadModal({ open, onOpenChange, onUploaded }) {
                     </div>
                   )}
                 </div>
-              </div>
+              )}
+
+              {iconMode === 'library' && (
+                <div className="icon-library">
+                  {libraryLoading ? (
+                    <div className="icon-library-empty">Loading icons…</div>
+                  ) : libraryIcons.length === 0 ? (
+                    <div className="icon-library-empty">
+                      No icons uploaded yet — upload one first to reuse it here.
+                    </div>
+                  ) : (
+                    <div className="icon-library-grid">
+                      {libraryIcons.map((icon) => (
+                        <div
+                          key={icon.filename}
+                          className={`icon-library-item ${selectedLibraryIcon === icon.filename ? 'selected' : ''}`}
+                          onClick={() => setSelectedLibraryIcon(icon.filename)}
+                          title={icon.filename}
+                        >
+                          <img src={icon.url} alt={icon.filename} />
+                          {icon.usageCount === 0 && (
+                            <button
+                              type="button"
+                              className="icon-library-remove"
+                              onClick={(e) => handleDeleteLibraryIcon(e, icon.filename)}
+                              aria-label={`Delete ${icon.filename}`}
+                              title="Unused — delete icon"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <label className="form-label">
