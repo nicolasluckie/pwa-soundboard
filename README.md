@@ -78,13 +78,14 @@ Pull the prebuilt image and run PWA Soundboard in minutes — no Node.js or buil
    DATA_DIR=/data
    ```
 
-   > | Variable   | Description                                               | Default                                                      |
-   > | ---------- | --------------------------------------------------------- | ------------------------------------------------------------ |
-   > | `HOST`     | Server bind address (`0.0.0.0` for all interfaces)        | `127.0.0.1`                                                  |
-   > | `PORT`     | Server listen port                                        | `3000`                                                       |
-   > | `ORIGIN`   | Public-facing origin(s) for CSRF checks (comma-separated) | Dev:<br>`http://HOST:PORT`<br>Prod:<br>`https://example.com` |
-   > | `NODE_ENV` | Deployment mode: `development` or `production`            | `development`                                                |
-   > | `DATA_DIR` | Data directory path (set to `/data` in Docker)            | `../data`                                                    |
+   > | Variable         | Description                                                 | Default                                                      |
+   > | ---------------- | ----------------------------------------------------------- | ------------------------------------------------------------ |
+   > | `HOST`           | Server bind address (`0.0.0.0` for all interfaces)          | `127.0.0.1`                                                  |
+   > | `PORT`           | Server listen port                                          | `3000`                                                       |
+   > | `ORIGIN`         | Public-facing origin(s) for CSRF checks (comma-separated)   | Dev:<br>`http://HOST:PORT`<br>Prod:<br>`https://example.com` |
+   > | `NODE_ENV`       | Deployment mode: `development` or `production`              | `development`                                                |
+   > | `DATA_DIR`       | Data directory path (set to `/data` in Docker)              | `../data`                                                    |
+   > | `ENABLE_UPLOADS` | Must be `true` to enable uploads (any other value disables) | `false` (disabled)                                           |
 
 3. Start the container:
 
@@ -280,6 +281,16 @@ Demo sounds work out of the box via the `sounds.example.yaml` fallback — no se
 > ```bash
 > ffmpeg -i input.png -vf scale=256:-1 -c:v libwebp -quality 80 output.webp
 > ```
+>
+> Or batch-convert all files in a directory:
+>
+> ```bash
+> # Audio: convert all wav/m4a/mp4 files to mp3
+> for f in *.wav; do [ -f "$f" ] && ffmpeg -i "$f" -vn -c:a libmp3lame -q:a 2 "${f%.*}.mp3"; done
+>
+> # Images: convert all png/jpg files to webp
+> for f in *.png; do [ -f "$f" ] && ffmpeg -i "$f" -vf scale=256:-1 -c:v libwebp -quality 80 "${f%.*}.webp"; done
+> ```
 
 ---
 
@@ -306,13 +317,14 @@ Set `NODE_ENV=production` in your `.env` to use the production override. The ser
 
 ### Environment Variables
 
-| Variable   | Default            | Description                                               |
-| ---------- | ------------------ | --------------------------------------------------------- |
-| `HOST`     | `127.0.0.1`        | Server bind address (`0.0.0.0` for all interfaces)        |
-| `PORT`     | `3000`             | Server listen port                                        |
-| `ORIGIN`   | `http://HOST:PORT` | Public-facing origin(s) for CSRF checks (comma-separated) |
-| `NODE_ENV` | `development`      | Deployment mode: `development` or `production`            |
-| `DATA_DIR` | `../data`          | Data directory path (set to `/data` in Docker)            |
+| Variable         | Default            | Description                                                 |
+| ---------------- | ------------------ | ----------------------------------------------------------- |
+| `HOST`           | `127.0.0.1`        | Server bind address (`0.0.0.0` for all interfaces)          |
+| `PORT`           | `3000`             | Server listen port                                          |
+| `ORIGIN`         | `http://HOST:PORT` | Public-facing origin(s) for CSRF checks (comma-separated)   |
+| `NODE_ENV`       | `development`      | Deployment mode: `development` or `production`              |
+| `DATA_DIR`       | `../data`          | Data directory path (set to `/data` in Docker)              |
+| `ENABLE_UPLOADS` | `false` (disabled) | Must be `true` to enable uploads (any other value disables) |
 
 ### CI/CD
 

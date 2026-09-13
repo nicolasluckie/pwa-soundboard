@@ -23,6 +23,14 @@ if (!ORIGIN_CHECK_ENABLED) {
   console.warn('⚠️  ORIGIN not set — origin check disabled. Set ORIGIN in production to prevent CSRF.');
 }
 
+// Feature flag: controls whether the upload UI is shown and uploads are
+// accepted. Must be explicitly set to "true" to enable uploads. Undefined,
+// empty, or any other value defaults to disabled (read-only).
+const ENABLE_UPLOADS = process.env.ENABLE_UPLOADS === 'true';
+if (!ENABLE_UPLOADS) {
+  console.warn('⚠️  ENABLE_UPLOADS is not set to "true" — uploads disabled (read-only mode).');
+}
+
 const dataPath = process.env.DATA_DIR
   ? path.resolve(process.env.DATA_DIR)
   : path.resolve(__dirname, '../data');
@@ -243,6 +251,10 @@ app.use(express.static(distPath));
 
 // --- API ---
 
+app.get('/api/config', (_req, res) => {
+  res.json({ enableUploads: ENABLE_UPLOADS });
+});
+
 app.get('/api/samples', async (_req, res) => {
   try {
     const samples = await getSamples();
@@ -291,6 +303,9 @@ app.get('/api/icons', async (_req, res) => {
 
 app.delete('/api/icons/:filename', async (req, res) => {
   try {
+    if (!ENABLE_UPLOADS) {
+      return res.status(403).json({ error: 'Uploads disabled' });
+    }
     const filename = path.basename(req.params.filename);
     const ext = path.extname(filename).slice(1).toLowerCase();
     if (filename !== req.params.filename || !ALLOWED_IMAGE_EXTENSIONS.has(ext)) {
@@ -341,6 +356,9 @@ const upload = multer({
 
 app.post('/api/upload', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'icon', maxCount: 1 }]), async (req, res) => {
   try {
+    if (!ENABLE_UPLOADS) {
+      return res.status(403).json({ error: 'Uploads disabled' });
+    }
     const audioFile = req.files?.file?.[0];
     if (!audioFile) {
       return res.status(400).json({ error: 'No file uploaded' });

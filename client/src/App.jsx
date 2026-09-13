@@ -13,6 +13,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [refreshOpen, setRefreshOpen] = useState(false);
+  const [enableUploads, setEnableUploads] = useState(false);
 
   useEffect(() => {
     fetch('/api/samples')
@@ -22,6 +23,10 @@ function App() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+    fetch('/api/config')
+      .then((r) => r.json())
+      .then((config) => setEnableUploads(config.enableUploads === true))
+      .catch(() => {});
   }, []);
 
   const { play, stopAll, active, activeFiles, preloading, preloadCount, preloadTotal } = useAudio(
@@ -55,14 +60,16 @@ function App() {
             >
               <RefreshCw size={16} />
             </button>
-            <button
-              className="upload-button"
-              onClick={() => setUploadOpen(true)}
-              aria-label="Add new sound"
-              title="Add new sound"
-            >
-              <Plus size={16} />
-            </button>
+            {enableUploads && (
+              <button
+                className="upload-button"
+                onClick={() => setUploadOpen(true)}
+                aria-label="Add new sound"
+                title="Add new sound"
+              >
+                <Plus size={16} />
+              </button>
+            )}
             <InstallPrompt />
           </div>
           <div className="top-bar-row">
@@ -148,16 +155,23 @@ function App() {
           </div>
         </div>
       )}
-      <UploadModal
-        open={uploadOpen}
-        onOpenChange={setUploadOpen}
-        onUploaded={() =>
-          fetch('/api/samples')
-            .then((r) => r.json())
-            .then((data) => setSamples(data))
-            .catch(() => {})
-        }
-      />
+      {enableUploads && (
+        <UploadModal
+          open={uploadOpen}
+          onOpenChange={setUploadOpen}
+          onUploaded={(sample) =>
+            setSamples((prev) => {
+              const idx = prev.findIndex((s) => s.id === sample.id);
+              if (idx !== -1) {
+                const next = [...prev];
+                next[idx] = sample;
+                return next;
+              }
+              return [...prev, sample];
+            })
+          }
+        />
+      )}
     </Fragment>
   );
 }
