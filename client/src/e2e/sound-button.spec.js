@@ -20,7 +20,7 @@ test('search filters sounds', async ({ page }) => {
   const total = await buttons.count();
 
   // Type a search query that should narrow the results
-  await page.fill('input[placeholder*="Search"]', 'fuck');
+  await page.fill('input[placeholder*="Search"]', 'anchorman');
 
   // Filtered results should be fewer than total but at least one
   const filtered = page.locator('.sound-button');
