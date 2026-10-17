@@ -246,14 +246,10 @@ pwa-soundboard/
 │       ├── hooks/         # Custom React hooks (useAudio)
 │       └── test/          # Vitest unit tests
 ├── data/                  # Sound data (partially gitignored)
-│   ├── audio/
-│   │   ├── demos/         # Committed demo sounds (repo)
-│   │   ├── user/          # Your personal sounds (gitignored)
-│   │   └── icons/
-│   │       ├── demos/     # Committed demo sound icons (repo)
-│   │       └── user/      # Your personal sound icons (gitignored)
-│   ├── demos.json         # Demo sound metadata (committed)
-│   └── user_data.json  # User sound metadata (gitignored)
+│   ├── audio/             # All audio files, flat (2 demo sounds committed, rest gitignored)
+│   ├── icons/             # All icon files, flat (2 demo icons committed, rest gitignored)
+│   ├── sounds.yaml         # All sound metadata — hand-edited + UI-uploaded (gitignored)
+│   └── sounds.example.yaml # Fallback demo content + template for sounds.yaml (committed)
 ├── docker/                # Docker build + compose overrides
 │   ├── Dockerfile         # Multi-stage Docker build
 │   ├── compose.dev.yaml   # Dev override (build from source)
@@ -274,11 +270,11 @@ See the [README](./README.md) for more detail on each directory.
 
 There are two ways to add sounds to the soundboard:
 
-1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/user/`, and updates `data/user_data.json` automatically. (Requires `user` in the `SOURCES` env var.)
+1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, icon/emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/`, and appends the entry to `data/sounds.yaml` automatically (re-uploading with the same slug updates the existing entry in place).
 
-2. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user_data.json` with `id`, `name`, `file`, and `color`.
+2. **Manually** — drop a pre-normalized `.mp3` file into `data/audio/`, then add an entry to `data/sounds.yaml` with `id`, `name`, `file`, and `color`. See `data/sounds.example.yaml` for the schema.
 
-Demo sounds in `data/audio/demos/` are committed to the repo and work out of the box. See the [README](./README#audio-files) for full details on the `SOURCES` env var.
+Demo sounds work out of the box via the `data/sounds.example.yaml` fallback — no setup required. See the [README](./README#audio-files) for full details.
 
 ---
 

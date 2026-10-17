@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import UploadModal from '../components/UploadModal.jsx';
 
+function getUploadCall() {
+  return global.fetch.mock.calls.find((call) => call[0] === '/api/upload');
+}
+
 describe('UploadModal', () => {
   beforeEach(() => {
     global.fetch = vi.fn();
@@ -170,14 +174,23 @@ describe('UploadModal', () => {
     expect(emojiInput.value).toBe('🎉');
   });
 
-  it('renders icon upload field', () => {
+  it('renders icon mode tabs, defaulting to emoji', () => {
     render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
-    expect(screen.getByText('Icon (optional)')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Emoji' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'New image' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Choose existing' })).toBeDefined();
+    expect(document.querySelector('.emoji-input')).toBeDefined();
+  });
+
+  it('switches to the upload tab and shows the drop zone', () => {
+    render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'New image' }));
     expect(screen.getByText('Click or drop')).toBeDefined();
   });
 
   it('shows icon preview when image selected', async () => {
     render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'New image' }));
     const iconInput = document.querySelectorAll('input[type="file"]')[1];
     const iconFile = new File(['img'], 'test.png', { type: 'image/png' });
     fireEvent.change(iconInput, { target: { files: [iconFile] } });
@@ -188,6 +201,7 @@ describe('UploadModal', () => {
 
   it('removes icon preview when remove button clicked', async () => {
     render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'New image' }));
     const iconInput = document.querySelectorAll('input[type="file"]')[1];
     const iconFile = new File(['img'], 'test.png', { type: 'image/png' });
     fireEvent.change(iconInput, { target: { files: [iconFile] } });
@@ -197,6 +211,20 @@ describe('UploadModal', () => {
     const removeBtn = document.querySelector('.icon-upload-remove');
     fireEvent.click(removeBtn);
     expect(screen.getByText('Click or drop')).toBeDefined();
+  });
+
+  it('lists existing icons on the choose-existing tab', async () => {
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([{ filename: 'a.webp', url: '/icons/a.webp', usageCount: 0 }]),
+    });
+
+    render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Choose existing' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('.icon-library-item')).not.toBeNull();
+    });
   });
 
   it('appends icon to FormData when submitting with icon selected', async () => {
@@ -220,7 +248,8 @@ describe('UploadModal', () => {
     const audioFile = new File(['audio'], 'test.mp3', { type: 'audio/mpeg' });
     fireEvent.change(audioInput, { target: { files: [audioFile] } });
 
-    // Select icon file
+    // Switch to upload-new-icon tab and select icon file
+    fireEvent.click(screen.getByRole('button', { name: 'New image' }));
     const iconInput = document.querySelectorAll('input[type="file"]')[1];
     const iconFile = new File(['img'], 'icon.png', { type: 'image/png' });
     fireEvent.change(iconInput, { target: { files: [iconFile] } });
@@ -233,11 +262,10 @@ describe('UploadModal', () => {
     fireEvent.submit(document.querySelector('form'));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(getUploadCall()).toBeDefined();
     });
 
-    const formDataCall = global.fetch.mock.calls[0];
-    const sentBody = formDataCall[1].body;
+    const sentBody = getUploadCall()[1].body;
     expect(sentBody.get('icon')).toBeInstanceOf(File);
     expect(sentBody.get('icon').name).toBe('icon.png');
   });
@@ -266,15 +294,16 @@ describe('UploadModal', () => {
     fireEvent.submit(document.querySelector('form'));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(getUploadCall()).toBeDefined();
     });
 
-    const sentBody = global.fetch.mock.calls[0][1].body;
+    const sentBody = getUploadCall()[1].body;
     expect(sentBody.get('icon')).toBeNull();
   });
 
   it('handles icon drag-and-drop', async () => {
     render(<UploadModal open={true} onOpenChange={() => {}} onUploaded={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'New image' }));
     const iconZone = document.querySelector('.icon-upload');
     const iconFile = new File(['img'], 'dropped.png', { type: 'image/png' });
     fireEvent.drop(iconZone, {
@@ -315,10 +344,10 @@ describe('UploadModal', () => {
     fireEvent.submit(document.querySelector('form'));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(getUploadCall()).toBeDefined();
     });
 
-    const sentBody = global.fetch.mock.calls[0][1].body;
+    const sentBody = getUploadCall()[1].body;
     expect(sentBody.get('slug')).toBe('existing-slug');
   });
 
@@ -326,10 +355,10 @@ describe('UploadModal', () => {
     const mockSample = {
       id: 'existing-slug',
       name: 'Updated',
-      file: 'user/existing-slug.mp3',
+      file: 'existing-slug.mp3',
       color: '#00d4ff',
       emoji: '🔊',
-      icon: '/icons/user/existing-slug.webp',
+      icon: '/icons/existing-slug.webp',
       tags: ['meme'],
     };
     global.fetch.mockResolvedValue({
@@ -344,6 +373,7 @@ describe('UploadModal', () => {
       target: { files: [new File(['audio'], 'test.mp3', { type: 'audio/mpeg' })] },
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'New image' }));
     const iconInput = document.querySelectorAll('input[type="file"]')[1];
     const iconFile = new File(['img'], 'replacement.png', { type: 'image/png' });
     fireEvent.change(iconInput, { target: { files: [iconFile] } });
@@ -361,10 +391,10 @@ describe('UploadModal', () => {
     fireEvent.submit(document.querySelector('form'));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(getUploadCall()).toBeDefined();
     });
 
-    const sentBody = global.fetch.mock.calls[0][1].body;
+    const sentBody = getUploadCall()[1].body;
     expect(sentBody.get('slug')).toBe('existing-slug');
     expect(sentBody.get('icon')).toBeInstanceOf(File);
     expect(sentBody.get('icon').name).toBe('replacement.png');

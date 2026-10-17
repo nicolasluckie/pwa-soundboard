@@ -24,6 +24,8 @@
 - **Global stop button** — silence all sounds with one click
 - **Overlapping playback** — sounds can play simultaneously; repeated clicks layer the audio
 - **Sound upload** — upload audio or video files through the UI; ffmpeg normalizes to MP3 automatically
+- **Icon reuse** — pick a previously-uploaded icon from a library instead of re-uploading duplicates, right from the upload dialog
+- **Bulk sound config** — hand-edit `data/sounds.yaml` to add or update many sounds at once without touching the UI
 - **Installable PWA** — works offline with audio caching, installable on mobile and desktop
 
 ---
@@ -73,18 +75,17 @@ Pull the prebuilt image and run PWA Soundboard in minutes — no Node.js or buil
    PORT=3000
    ORIGIN=https://soundboard.example.com
    NODE_ENV=production
-   SOURCES=user
    DATA_DIR=/data
    ```
 
-   > | Variable   | Description                                               | Default                                                      |
-   > | ---------- | --------------------------------------------------------- | ------------------------------------------------------------ |
-   > | `HOST`     | Server bind address (`0.0.0.0` for all interfaces)        | `127.0.0.1`                                                  |
-   > | `PORT`     | Server listen port                                        | `3000`                                                       |
-   > | `ORIGIN`   | Public-facing origin(s) for CSRF checks (comma-separated) | Dev:<br>`http://HOST:PORT`<br>Prod:<br>`https://example.com` |
-   > | `NODE_ENV` | Deployment mode: `development` or `production`            | `development`                                                |
-   > | `SOURCES`  | Sound sources to load: `demo`, `user`, or `demo,user`     | `demo,user`                                                  |
-   > | `DATA_DIR` | Data directory path (set to `/data` in Docker)            | `../data`                                                    |
+   > | Variable         | Description                                                 | Default                                                      |
+   > | ---------------- | ----------------------------------------------------------- | ------------------------------------------------------------ |
+   > | `HOST`           | Server bind address (`0.0.0.0` for all interfaces)          | `127.0.0.1`                                                  |
+   > | `PORT`           | Server listen port                                          | `3000`                                                       |
+   > | `ORIGIN`         | Public-facing origin(s) for CSRF checks (comma-separated)   | Dev:<br>`http://HOST:PORT`<br>Prod:<br>`https://example.com` |
+   > | `NODE_ENV`       | Deployment mode: `development` or `production`              | `development`                                                |
+   > | `DATA_DIR`       | Data directory path (set to `/data` in Docker)              | `../data`                                                    |
+   > | `ENABLE_UPLOADS` | Must be `true` to enable uploads (any other value disables) | `false` (disabled)                                           |
 
 3. Start the container:
 
@@ -92,7 +93,7 @@ Pull the prebuilt image and run PWA Soundboard in minutes — no Node.js or buil
    docker compose up -d
    ```
 
-4. Open `http://localhost:3000` in your browser. Add sounds via the UI or drop MP3s into `./data/audio/user/`.
+4. Open `http://localhost:3000` in your browser. Add sounds via the UI, or drop MP3s into `./data/audio/` and describe them in `./data/sounds.yaml` (copy `./data/sounds.example.yaml` to get started).
 
 ### Development Setup
 
@@ -121,13 +122,7 @@ Pull the prebuilt image and run PWA Soundboard in minutes — no Node.js or buil
 
    This also installs Husky git hooks automatically via the `prepare` script.
 
-3. Set up the data directory (optional — demo sounds work out of the box):
-
-   ```bash
-   mkdir -p data/audio/user
-   ```
-
-   The `data/` directory holds your personal sounds. Demo sounds in `data/audio/demos/` are committed and work immediately. Your user sounds in `data/audio/user/` are gitignored.
+3. The data directory works out of the box — demo sounds are committed and load immediately. No setup needed unless you want to add your own sounds (see [Adding Sounds](#adding-sounds)).
 
 4. Install Playwright browsers (for e2e tests):
 
@@ -226,14 +221,10 @@ pwa-soundboard/
 │       ├── hooks/         # Custom React hooks (useAudio)
 │       └── test/          # Vitest unit tests
 ├── data/                  # Sound data (partially gitignored)
-│   ├── audio/
-│   │   ├── demos/         # Committed demo sounds (repo)
-│   │   ├── user/          # Your personal sounds (gitignored)
-│   │   └── icons/
-│   │       ├── demos/     # Committed demo sound icons (repo)
-│   │       └── user/      # Your personal sound icons (gitignored)
-│   ├── demos.json         # Demo sound metadata (committed)
-│   └── user_data.json  # User sound metadata (gitignored)
+│   ├── audio/             # All audio files, flat (2 demo sounds committed, rest gitignored)
+│   ├── icons/             # All icon files, flat (2 demo icons committed, rest gitignored)
+│   ├── sounds.yaml         # All sound metadata — hand-edited + UI-uploaded (gitignored)
+│   └── sounds.example.yaml # Fallback demo content + template for sounds.yaml (committed)
 ├── docker/                # Docker build + compose overrides
 │   ├── Dockerfile         # Multi-stage Docker build
 │   ├── compose.dev.yaml   # Dev override (build from source)
@@ -250,31 +241,56 @@ pwa-soundboard/
 
 ## Audio Files
 
-Sounds are split into two sources, controlled by the `SOURCES` env var:
+Audio and icon files live in flat directories — `data/audio/` and `data/icons/`. All sound metadata lives in a single file: **`data/sounds.yaml`** (gitignored, personal). If that file doesn't exist yet (e.g. a fresh clone), the server falls back to the committed **`data/sounds.example.yaml`** so demo sounds work out of the box.
 
-- **`data/audio/demos/`** — Committed demo sounds (included with the repo). Metadata in `data/demos.json`.
-- **`data/audio/user/`** — Your personal sounds (gitignored). Metadata in `data/user_data.json`.
-
-The server merges both sources on the fly when `/api/samples` is called — no cache file to maintain.
-
-### Sound Sources
-
-The `SOURCES` env var controls which sources are loaded:
-
-| Value       | Behavior              |
-| ----------- | --------------------- |
-| `demo,user` | Load both (default)   |
-| `demo`      | Only repo demo sounds |
-| `user`      | Only personal sounds  |
-
-Switching is instant — just restart the server with a different `SOURCES` value.
+The server reads `sounds.yaml` on every `/api/samples` request — no cache, no restart needed. Both UI uploads and hand-edits write to the same file, so they always stay in sync.
 
 ### Adding Sounds
 
-1. **Via the UI** — click the "Add Sound" button, select an audio or video file, fill in the metadata (name, emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it to `data/audio/user/`, and updates `data/user_data.json` automatically. (Requires `user` in `SOURCES`.)
-2. **Manually** — drop an `.mp3` file into `data/audio/user/`, then add an entry to `data/user_data.json` with `id`, `name`, `file`, and `color`.
+**Via the UI (one at a time, from anywhere):** Click "Add Sound", select an audio or video file, fill in the metadata (name, icon/emoji, color, tags), and submit. The server normalizes the file to MP3 via ffmpeg, saves it into `data/audio/` (icon into `data/icons/`), and appends the entry to `data/sounds.yaml` automatically. If an entry with the same slug already exists, it's updated in place. Existing comments and formatting in `sounds.yaml` are preserved.
 
-Demo sounds work out of the box — no setup required.
+For the icon, you can either upload a new image, or switch to the **"Choose existing"** tab to reuse an icon already in your library instead of uploading a duplicate. The same tab also lets you delete icons that aren't used by any sound anymore.
+
+**Via `data/sounds.yaml` (bulk, at your desk):** Copy `data/sounds.example.yaml` to `data/sounds.yaml`, then list as many sounds as you like:
+
+```yaml
+sounds:
+  - id: my-sound
+    name: My Sound
+    file: my-sound.mp3 # must already exist in data/audio/
+    icon: /icons/my-sound.webp # optional — reuse the same icon across entries; OR use `emoji: "🔊"`
+    color: "#00d4ff"
+    tags: [meme]
+```
+
+Drop the referenced audio files into `data/audio/` yourself first — unlike the UI upload, `sounds.yaml` does **not** run them through ffmpeg, so pre-normalize them if needed. The file is re-read on every request, so add/edit/remove entries and refresh — no restart, no rebuild. Invalid entries (missing name, missing audio file, etc.) are skipped with a warning in the server log rather than breaking the whole list.
+
+Demo sounds work out of the box via the `sounds.example.yaml` fallback — no setup required.
+
+> [!TIP]
+> When **manually** adding sounds to `sounds.yaml`, make sure to use the correct file paths and that the files exist in the `data/audio/` and `data/icons/` directories.
+>
+> Use this command to convert **audio** files to mp3:
+>
+> ```bash
+> ffmpeg -i input.wav -vn -c:a libmp3lame -q:a 2 output.mp3
+> ```
+>
+> Use this command to convert **images** to webp (max 256px wide, ~10 KB):
+>
+> ```bash
+> ffmpeg -i input.png -vf scale=256:-1 -c:v libwebp -quality 80 output.webp
+> ```
+>
+> Or batch-convert all files in a directory:
+>
+> ```bash
+> # Audio: convert all wav/m4a/mp4 files to mp3
+> for f in *.wav; do [ -f "$f" ] && ffmpeg -i "$f" -vn -c:a libmp3lame -q:a 2 "${f%.*}.mp3"; done
+>
+> # Images: convert all png/jpg files to webp
+> for f in *.png; do [ -f "$f" ] && ffmpeg -i "$f" -vf scale=256:-1 -c:v libwebp -quality 80 "${f%.*}.webp"; done
+> ```
 
 ---
 
@@ -301,14 +317,14 @@ Set `NODE_ENV=production` in your `.env` to use the production override. The ser
 
 ### Environment Variables
 
-| Variable   | Default            | Description                                               |
-| ---------- | ------------------ | --------------------------------------------------------- |
-| `HOST`     | `127.0.0.1`        | Server bind address (`0.0.0.0` for all interfaces)        |
-| `PORT`     | `3000`             | Server listen port                                        |
-| `ORIGIN`   | `http://HOST:PORT` | Public-facing origin(s) for CSRF checks (comma-separated) |
-| `NODE_ENV` | `development`      | Deployment mode: `development` or `production`            |
-| `SOURCES`  | `demo,user`        | Sound sources to load: `demo`, `user`, or `demo,user`     |
-| `DATA_DIR` | `../data`          | Data directory path (set to `/data` in Docker)            |
+| Variable         | Default            | Description                                                 |
+| ---------------- | ------------------ | ----------------------------------------------------------- |
+| `HOST`           | `127.0.0.1`        | Server bind address (`0.0.0.0` for all interfaces)          |
+| `PORT`           | `3000`             | Server listen port                                          |
+| `ORIGIN`         | `http://HOST:PORT` | Public-facing origin(s) for CSRF checks (comma-separated)   |
+| `NODE_ENV`       | `development`      | Deployment mode: `development` or `production`              |
+| `DATA_DIR`       | `../data`          | Data directory path (set to `/data` in Docker)              |
+| `ENABLE_UPLOADS` | `false` (disabled) | Must be `true` to enable uploads (any other value disables) |
 
 ### CI/CD
 

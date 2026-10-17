@@ -585,44 +585,102 @@ body {
   border-color: var(--accent);
 }
 
-.form-row {
+.icon-mode-tabs {
   display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
-.form-row .form-label {
-  flex: 0 0 auto;
-  min-width: 0;
-  text-align: center;
-}
-
-.form-row .form-label input {
-  margin: 0 auto;
-}
-
-.form-row .form-label:first-child {
-  width: 100px;
-  margin-left: 2px;
-}
-
-.form-row .form-label:last-child {
-  margin-left: 8px;
-}
-
-.form-or {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8px;
-}
-
-.form-or span {
-  font-weight: bold;
-  font-style: italic;
+.icon-mode-tab {
+  background: var(--bg);
+  border: 1px solid var(--border);
   color: var(--text-muted);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.icon-mode-tab:hover {
+  border-color: var(--accent);
+}
+
+.icon-mode-tab.selected {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.icon-library {
+  min-height: 60px;
+}
+
+.icon-library-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 12px;
+  text-align: center;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+}
+
+.icon-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.icon-library-item {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.icon-library-item:hover {
+  border-color: var(--accent);
+}
+
+.icon-library-item.selected {
+  border-color: var(--accent);
+}
+
+.icon-library-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.icon-library-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.icon-library-item:hover .icon-library-remove {
+  opacity: 1;
 }
 
 .emoji-input {
