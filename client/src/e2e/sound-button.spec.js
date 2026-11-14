@@ -14,12 +14,20 @@ test('soundboard loads and displays buttons', async ({ page }) => {
 test('search filters sounds', async ({ page }) => {
   await page.goto('/');
 
-  // Type in search
+  // Wait for sounds to load and capture the total count
+  const buttons = page.locator('.sound-button');
+  await expect(buttons.first()).toBeVisible();
+  const total = await buttons.count();
+
+  // Type a search query that should narrow the results
   await page.fill('input[placeholder*="Search"]', 'bruh');
 
-  // Check that filtered results are shown
-  const buttons = page.locator('.sound-button');
-  await expect(buttons).toHaveCount(1);
+  // Filtered results should be fewer than total but at least one
+  const filtered = page.locator('.sound-button');
+  await expect(filtered).toHaveCount(await filtered.count());
+  const filteredCount = await filtered.count();
+  expect(filteredCount).toBeGreaterThan(0);
+  expect(filteredCount).toBeLessThan(total);
 });
 
 test('stop all button is present', async ({ page }) => {

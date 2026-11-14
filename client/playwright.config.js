@@ -25,6 +25,7 @@ export default defineConfig({
         env: {
           HOST: '127.0.0.1',
           PORT: '3000',
+          ENABLE_UPLOADS: 'true',
           ORIGIN: 'http://localhost:3000',
         },
       }
@@ -35,6 +36,7 @@ export default defineConfig({
         env: {
           HOST: '127.0.0.1',
           PORT: '3000',
+          ENABLE_UPLOADS: 'true',
           ORIGIN: 'http://localhost:5173',
         },
       },

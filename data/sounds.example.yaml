@@ -1,0 +1,43 @@
+# data/sounds.yaml — the single sound metadata file.
+#
+# This file doubles as documentation AND the fallback demo content: if you
+# never create your own data/sounds.yaml, the server reads this file instead,
+# so a fresh clone still shows a couple of working demo sounds out of the box.
+#
+# To add your own sounds, copy this file to data/sounds.yaml (gitignored,
+# personal — never committed) and edit away. Once data/sounds.yaml exists, it
+# completely replaces this fallback.
+#
+# There are two ways to add sounds:
+#   1. Hand-edit data/sounds.yaml (bulk, at your desk) — see the schema below.
+#   2. Use the upload UI (one at a time, from anywhere) — the server appends
+#      new entries to sounds.yaml automatically, preserving your comments and
+#      formatting. Re-uploading with the same slug updates the existing entry.
+#
+# The file is re-read live on every request, so:
+#   - adding/editing an entry adds/updates that sound
+#   - removing an entry removes that sound from the app
+#
+# Requirements for each entry:
+#   - `file` must already exist in data/audio/ (drop pre-normalized MP3s there
+#     yourself; hand-editing does NOT run ffmpeg, unlike the upload UI)
+#   - `icon` (optional) must reference an existing file in data/icons/ — reuse
+#     the same icon across as many entries as you like, no re-uploading needed
+#   - if `icon` is omitted, `emoji` is used instead (defaults to 🔊)
+#
+# Invalid or missing-file entries are skipped with a warning in the server
+# log rather than breaking the whole list.
+
+sounds:
+  - id: bruh-sound-effect # required, unique; also used as the default filename stem
+    name: Bruh
+    file: bruh-sound-effect.mp3 # optional, defaults to `<id>.mp3`
+    icon: /icons/bruh_icon.webp # optional; OR use `emoji: "🔊"` instead
+    color: "#34d399" # optional, defaults to '#00d4ff'
+    tags: [bruh, meme, reaction] # optional, defaults to []
+  - id: oof
+    name: Oof
+    file: oof.mp3
+    icon: /icons/oof.webp
+    color: "#f87171"
+    tags: [oof, meme, reaction]

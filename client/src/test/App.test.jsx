@@ -23,6 +23,12 @@ describe('App', () => {
           json: () => Promise.resolve(mockSamples),
         });
       }
+      if (url === '/api/config') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ enableUploads: true }),
+        });
+      }
       return Promise.resolve({
         ok: true,
         arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
@@ -106,7 +112,7 @@ describe('App', () => {
 
   it('renders add sound button', async () => {
     render(<App />);
-    expect(screen.getByLabelText('Add new sound')).toBeDefined();
+    await waitFor(() => expect(screen.getByLabelText('Add new sound')).toBeDefined());
   });
 
   it('opens upload modal when add sound clicked', async () => {

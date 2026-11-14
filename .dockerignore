@@ -9,9 +9,15 @@ client/blob-report/
 .git/
 .github/
 .husky/
-data/audio/user/
-data/audio/icons/*
-!data/audio/icons/demos/
+# Exclude user-uploaded audio/icons from the image; only committed demo files
+# (bruh-sound-effect.mp3, oof.mp3, bruh_icon.webp, oof.webp) should be copied.
+data/audio/*
+!data/audio/bruh-sound-effect.mp3
+!data/audio/oof.mp3
+data/icons/*
+!data/icons/bruh_icon.webp
+!data/icons/oof.webp
+data/sounds.yaml
 venv/
 .env
 .env.*

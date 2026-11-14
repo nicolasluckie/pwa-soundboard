@@ -27,11 +27,11 @@ RUN cd server && npm ci --omit=dev && cd ..
 COPY server/index.js ./server/
 
 COPY --from=build /app/client/dist ./client/dist
-COPY --from=build /app/data/demos.json ./data/demos.json
-COPY --from=build /app/data/audio/demos ./data/audio/demos
-COPY --from=build /app/data/audio/icons/demos ./data/audio/icons/demos
+COPY --from=build /app/data/sounds.example.yaml ./data/sounds.example.yaml
+COPY --from=build /app/data/audio ./data/audio
+COPY --from=build /app/data/icons ./data/icons
 
-RUN mkdir -p data/audio/user && echo '[]' > data/user_data.json
+RUN mkdir -p data/audio data/icons
 
 ENV NODE_ENV=production
 ENV PORT=3000

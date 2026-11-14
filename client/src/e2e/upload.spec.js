@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const TEST_AUDIO_PATH = '../data/audio/demos/bruh-sound-effect.mp3';
+const TEST_AUDIO_PATH = '../data/audio/bruh-sound-effect.mp3';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -88,7 +88,7 @@ test('successful upload adds sound to grid', async ({ page }) => {
         sample: {
           id: 'e2e-test-sound',
           name: uniqueName,
-          file: 'user/e2e-test-sound.mp3',
+          file: 'e2e-test-sound.mp3',
           color: '#00d4ff',
           emoji: '🔊',
           tags: ['meme'],
@@ -139,8 +139,28 @@ test('upload error shows error message', async ({ page }) => {
 test('icon upload field is visible in modal', async ({ page }) => {
   await page.locator('.upload-button').click();
   await expect(page.locator('.upload-dialog')).toBeVisible();
-  await expect(page.getByText('Icon (optional)')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'New image' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'New image' }).click();
   await expect(page.getByText('Click or drop')).toBeVisible();
+});
+
+test('choose existing icon tab lists the icon library', async ({ page }) => {
+  await page.route('**/api/icons', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { filename: 'bruh_icon.webp', url: '/icons/bruh_icon.webp', usageCount: 1 },
+      ]),
+    })
+  );
+
+  await page.locator('.upload-button').click();
+  await expect(page.locator('.upload-dialog')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Choose existing' }).click();
+  await expect(page.locator('.icon-library-item')).toHaveCount(1);
 });
 
 test('successful upload with icon returns icon path', async ({ page }) => {
@@ -155,10 +175,10 @@ test('successful upload with icon returns icon path', async ({ page }) => {
         sample: {
           id: 'icon-test-sound',
           name: uniqueName,
-          file: 'user/icon-test-sound.mp3',
+          file: 'icon-test-sound.mp3',
           color: '#00d4ff',
           emoji: '🔊',
-          icon: '/icons/user/icon-test-sound.webp',
+          icon: '/icons/icon-test-sound.webp',
           tags: ['meme'],
         },
       }),
@@ -182,7 +202,7 @@ test('successful upload with icon returns icon path', async ({ page }) => {
   await expect(soundButton).toBeVisible();
   const iconImg = soundButton.locator('.sound-bg-img');
   await expect(iconImg).toBeVisible();
-  await expect(iconImg).toHaveCSS('background-image', /\/icons\/user\/icon-test-sound\.webp/);
+  await expect(iconImg).toHaveCSS('background-image', /\/icons\/icon-test-sound\.webp/);
 });
 
 test('upload rejects SVG icon files', async ({ page }) => {
@@ -225,7 +245,7 @@ test('re-upload with same slug overwrites existing sound', async ({ page }) => {
         sample: {
           id: slug,
           name: uploadCount === 1 ? firstName : updatedName,
-          file: `user/${slug}.mp3`,
+          file: `${slug}.mp3`,
           color: '#00d4ff',
           emoji: '🔊',
           tags: ['meme'],
@@ -278,10 +298,10 @@ test('re-upload with same slug overwrites existing icon', async ({ page }) => {
         sample: {
           id: slug,
           name,
-          file: `user/${slug}.mp3`,
+          file: `${slug}.mp3`,
           color: '#00d4ff',
           emoji: '🔊',
-          icon: `/icons/user/${slug}.webp`,
+          icon: `/icons/${slug}.webp`,
           tags: ['meme'],
         },
       }),
@@ -323,5 +343,5 @@ test('re-upload with same slug overwrites existing icon', async ({ page }) => {
   await expect(updatedButton).toBeVisible();
   const iconImg = updatedButton.locator('.sound-bg-img');
   await expect(iconImg).toBeVisible();
-  await expect(iconImg).toHaveCSS('background-image', /\/icons\/user\/icon-overwrite-test\.webp/);
+  await expect(iconImg).toHaveCSS('background-image', /\/icons\/icon-overwrite-test\.webp/);
 });
