@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-11-14
+
+### Added
+
+- Gate upload UI behind ENABLE_UPLOADS feature flag ([`e1d11ec`](https://github.com/nicolasluckie/pwa-soundboard/commit/e1d11ecd205b656636d8842ea3ad9f516a1a0d3c))
+
+### Changed
+
+- Consolidate to single sounds.yaml source ([`096643c`](https://github.com/nicolasluckie/pwa-soundboard/commit/096643ce3123d8ec5ba8139fdff8d6f3ad6ecd5d))
+
 ## [1.0.6] - 2026-07-05
 
 ### Added
